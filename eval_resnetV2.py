@@ -141,6 +141,7 @@ def main(_):
     # Define the model #
     ####################
     logits, _ = network_fn(images)
+    logits = tf.squeeze(logits)
 
     if FLAGS.moving_average_decay:
       variable_averages = tf.train.ExponentialMovingAverage(
