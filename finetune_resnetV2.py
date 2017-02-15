@@ -482,6 +482,9 @@ def main(_):
       images, labels = batch_queue.dequeue()
       logits, end_points = network_fn(images)
 
+      print logits.get_shape()
+      print labels.get_shape()
+
       #############################
       # Specify the loss function #
       #############################
