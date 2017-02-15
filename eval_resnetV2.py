@@ -53,19 +53,19 @@ tf.app.flags.DEFINE_string(
     'dataset_name', 'imagenet', 'The name of the dataset to load.')
 
 tf.app.flags.DEFINE_string(
-    'dataset_split_name', 'test', 'The name of the train/test split.')
+    'dataset_split_name', 'validation', 'The name of the train/test split.')
 
 tf.app.flags.DEFINE_string(
     'dataset_dir', None, 'The directory where the dataset files are stored.')
 
 tf.app.flags.DEFINE_integer(
-    'labels_offset', 0,
+    'labels_offset', 1,
     'An offset for the labels in the dataset. This flag is primarily used to '
     'evaluate the VGG and ResNet architectures which do not use a background '
     'class for the ImageNet dataset.')
 
 tf.app.flags.DEFINE_string(
-    'model_name', 'inception_v3', 'The name of the architecture to evaluate.')
+    'model_name', 'resnet_v2_50', 'The name of the architecture to evaluate.')
 
 tf.app.flags.DEFINE_string(
     'preprocessing_name', None, 'The name of the preprocessing to use. If left '
@@ -77,7 +77,7 @@ tf.app.flags.DEFINE_float(
     'If left as None, then moving averages are not used.')
 
 tf.app.flags.DEFINE_integer(
-    'eval_image_size', None, 'Eval image size')
+    'eval_image_size', 224, 'Eval image size')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -85,6 +85,10 @@ FLAGS = tf.app.flags.FLAGS
 def main(_):
   if not FLAGS.dataset_dir:
     raise ValueError('You must supply the dataset directory with --dataset_dir')
+  if not FLAGS.checkpoint_path:
+    raise ValueError('You must supply the model with --checkpoint_path')
+  if not FLAGS.eval_dir:
+    raise ValueError('You must supply the evaluation result directory with --eval_dir')
 
   tf.logging.set_verbosity(tf.logging.INFO)
   with tf.Graph().as_default():
