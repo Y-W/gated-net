@@ -482,9 +482,6 @@ def main(_):
       images, labels = batch_queue.dequeue()
       logits, end_points = network_fn(images)
 
-      print(logits.get_shape())
-      print(labels.get_shape())
-
       #############################
       # Specify the loss function #
       #############################
@@ -493,7 +490,7 @@ def main(_):
             end_points['AuxLogits'], labels,
             label_smoothing=FLAGS.label_smoothing, weight=0.4, scope='aux_loss')
       slim.losses.softmax_cross_entropy(
-          logits, labels, label_smoothing=FLAGS.label_smoothing, weight=1.0)
+          tf.squeeze(logits), labels, label_smoothing=FLAGS.label_smoothing, weight=1.0)
       return end_points
 
     # Gather initial summaries.
