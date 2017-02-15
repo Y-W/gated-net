@@ -37,7 +37,7 @@ tf.app.flags.DEFINE_string(
 # Need to Specify
 ###############################################################################
 tf.app.flags.DEFINE_string(
-    'train_dir', '~/model_log/fallback_dir/',
+    'train_dir', None,
     'Directory where checkpoints and event logs are written to.')
 
 tf.app.flags.DEFINE_integer('num_clones', 1,
@@ -177,7 +177,7 @@ tf.app.flags.DEFINE_string(
     'dataset_split_name', 'train', 'The name of the train/test split.')
 
 tf.app.flags.DEFINE_string(
-    'dataset_dir', '~/data/imagenet_proto/', 'The directory where the dataset files are stored.')
+    'dataset_dir', None, 'The directory where the dataset files are stored.')
 
 tf.app.flags.DEFINE_integer(
     'labels_offset', 1,
@@ -406,6 +406,8 @@ def _get_variables_to_train():
 def main(_):
   if not FLAGS.dataset_dir:
     raise ValueError('You must supply the dataset directory with --dataset_dir')
+  if not FLAGS.train_dir:
+    raise ValueError('You must supply the dataset directory with --train_dir')
 
   tf.logging.set_verbosity(tf.logging.INFO)
   with tf.Graph().as_default():
