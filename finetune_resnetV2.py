@@ -206,7 +206,7 @@ tf.app.flags.DEFINE_integer('max_number_of_steps', None,
 #####################
 
 tf.app.flags.DEFINE_string(
-    'checkpoint_path', '~/data/pretrain_model/resnet_v1_50.ckpt',
+    'checkpoint_path', None,
     'The path to a checkpoint from which to fine-tune.')
 
 tf.app.flags.DEFINE_string(
@@ -407,7 +407,9 @@ def main(_):
   if not FLAGS.dataset_dir:
     raise ValueError('You must supply the dataset directory with --dataset_dir')
   if not FLAGS.train_dir:
-    raise ValueError('You must supply the dataset directory with --train_dir')
+    raise ValueError('You must supply the logging directory with --train_dir')
+  if not FLAGS.checkpoint_path:
+    raise ValueError('You must supply the pretrained model with --checkpoint_path')
 
   tf.logging.set_verbosity(tf.logging.INFO)
   with tf.Graph().as_default():
