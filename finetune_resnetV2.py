@@ -189,7 +189,7 @@ tf.app.flags.DEFINE_string(
     'model_name', 'resnet_v2_50', 'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
-    'preprocessing_name', 'vgg_preprocessing', 'The name of the preprocessing to use. If left '
+    'preprocessing_name', None, 'The name of the preprocessing to use. If left '
     'as `None`, then the model_name flag is used.')
 
 tf.app.flags.DEFINE_integer(
