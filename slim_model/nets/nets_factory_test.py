@@ -22,7 +22,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-import nets_factory
+from . import nets_factory
 
 
 class NetworksTest(tf.test.TestCase):
