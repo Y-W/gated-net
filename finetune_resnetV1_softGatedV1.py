@@ -215,6 +215,10 @@ tf.app.flags.DEFINE_string(
     'from a checkpoint.')
 
 tf.app.flags.DEFINE_string(
+    'checkpoint_substitute_pattern', 'resnetV1_softGatedV1,resnet_v1,bottleneckV1_softGatedV1,bottleneck_v1',
+    'Comma-separated list of replacement patterns pairs for mapping model variable to checkpoint data.')
+
+tf.app.flags.DEFINE_string(
     'trainable_scopes', None,
     'Comma-separated list of scopes to filter the set of variables to train.'
     'By default, None would train all the variables.')
@@ -351,8 +355,11 @@ def _get_init_fn():
     exclusions = [scope.strip()
                   for scope in FLAGS.checkpoint_exclude_scopes.split(',')]
 
+  sub_patterns_splits = [pattern.strip() for pattern in FLAGS.checkpoint_substitute_pattern.split(',')]
+  sub_patterns = zip(sub_patterns_splits[0::2], sub_patterns_splits[1::2])
+
   # TODO(sguada) variables.filter_variables()
-  variables_to_restore = []
+  variables_to_restore = {}
   for var in slim.get_model_variables():
     excluded = False
     for exclusion in exclusions:
@@ -360,7 +367,10 @@ def _get_init_fn():
         excluded = True
         break
     if not excluded:
-      variables_to_restore.append(var)
+      var_name = var.op.name
+      for patt, repl in sub_patterns:
+          var_name = re.sub(patt, repl, var_name)
+      variables_to_restore[var_name] = var
 
   if tf.gfile.IsDirectory(FLAGS.checkpoint_path):
     checkpoint_path = tf.train.latest_checkpoint(FLAGS.checkpoint_path)

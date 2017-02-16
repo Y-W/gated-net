@@ -91,7 +91,7 @@ def bottleneck_softGated(inputs, depth, depth_bottleneck, stride, isGated=False,
   Returns:
     The ResNet unit's output.
   """
-  with tf.variable_scope(scope, 'bottleneck_v1', [inputs]) as sc:
+  with tf.variable_scope(scope, 'bottleneckV1_softGatedV1', [inputs]) as sc:
     depth_in = slim.utils.last_dimension(inputs.get_shape(), min_rank=4)
     if depth == depth_in:
       shortcut = resnet_utils.subsample(inputs, stride, 'shortcut')
@@ -107,7 +107,7 @@ def bottleneck_softGated(inputs, depth, depth_bottleneck, stride, isGated=False,
                            activation_fn=None, scope='conv3')
     
     if isGated:
-      with tf.variable_scope(sc, 'soft_gate', [inputs]):
+      with tf.variable_scope('soft_gate', [inputs]):
         numGateChannel = int(gateChannelRatio * depth_bottleneck)
         gateInput = resnet_utils.conv2d_same(inputs, numGateChannel, 3, stride, rate=rate, scope='conv')
         gateInput = tf.reduce_max(gateInput, [1, 2], keep_dims=True, name='max_pool')
@@ -187,7 +187,7 @@ def resnetV1_softGated(inputs,
   Raises:
     ValueError: If the target output_stride is not valid.
   """
-  with tf.variable_scope(scope, 'resnet_v1', [inputs], reuse=reuse) as sc:
+  with tf.variable_scope(scope, 'resnetV1_softGatedV1', [inputs], reuse=reuse) as sc:
     end_points_collection = sc.name + '_end_points'
     with slim.arg_scope([slim.conv2d, bottleneck_softGated,
                          resnet_utils.stack_blocks_dense],
