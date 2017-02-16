@@ -182,7 +182,7 @@ def stack_blocks_dense(net, blocks, output_stride=None,
 
           auxArgs = {}
           if len(unit) == 4:
-            auxArgs = unit[4]
+            auxArgs = unit[3]
 
           # If we have reached the target output_stride, then we need to employ
           # atrous convolution with stride=1 and multiply the atrous rate by the
