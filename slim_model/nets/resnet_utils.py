@@ -178,7 +178,11 @@ def stack_blocks_dense(net, blocks, output_stride=None,
           raise ValueError('The target output_stride cannot be reached.')
 
         with tf.variable_scope('unit_%d' % (i + 1), values=[net]):
-          unit_depth, unit_depth_bottleneck, unit_stride = unit
+          unit_depth, unit_depth_bottleneck, unit_stride = unit[:3]
+
+          auxArgs = {}
+          if len(unit) == 4:
+            auxArgs = unit[4]
 
           # If we have reached the target output_stride, then we need to employ
           # atrous convolution with stride=1 and multiply the atrous rate by the
@@ -188,7 +192,8 @@ def stack_blocks_dense(net, blocks, output_stride=None,
                                 depth=unit_depth,
                                 depth_bottleneck=unit_depth_bottleneck,
                                 stride=1,
-                                rate=rate)
+                                rate=rate,
+                                **auxArgs)
             rate *= unit_stride
 
           else:
@@ -196,7 +201,8 @@ def stack_blocks_dense(net, blocks, output_stride=None,
                                 depth=unit_depth,
                                 depth_bottleneck=unit_depth_bottleneck,
                                 stride=unit_stride,
-                                rate=1)
+                                rate=1,
+                                **auxArgs)
             current_stride *= unit_stride
       net = slim.utils.collect_named_outputs(outputs_collections, sc.name, net)
 

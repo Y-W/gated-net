@@ -29,6 +29,7 @@ from . import overfeat
 from . import resnet_v1
 from . import resnet_v2
 from . import vgg
+from . import resnetV1_softGatedV1
 
 slim = tf.contrib.slim
 
@@ -52,6 +53,7 @@ networks_map = {'alexnet_v2': alexnet.alexnet_v2,
                 'resnet_v2_101': resnet_v2.resnet_v2_101,
                 'resnet_v2_152': resnet_v2.resnet_v2_152,
                 'resnet_v2_200': resnet_v2.resnet_v2_200,
+                'resnetV1_softGatedV1_101': resnetV1_softGatedV1.resnetV1_softGatedV1_101,
                }
 
 arg_scopes_map = {'alexnet_v2': alexnet.alexnet_v2_arg_scope,
@@ -75,6 +77,7 @@ arg_scopes_map = {'alexnet_v2': alexnet.alexnet_v2_arg_scope,
                   'resnet_v2_101': resnet_v2.resnet_arg_scope,
                   'resnet_v2_152': resnet_v2.resnet_arg_scope,
                   'resnet_v2_200': resnet_v2.resnet_arg_scope,
+                  'resnetV1_softGatedV1_101': resnetV1_softGatedV1.resnet_arg_scope,
                  }
 
 
