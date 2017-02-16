@@ -408,8 +408,8 @@ def main(_):
     raise ValueError('You must supply the dataset directory with --dataset_dir')
   if not FLAGS.train_dir:
     raise ValueError('You must supply the logging directory with --train_dir')
-  if not FLAGS.checkpoint_path:
-    raise ValueError('You must supply the pretrained model with --checkpoint_path')
+#   if not FLAGS.checkpoint_path:
+#     raise ValueError('You must supply the pretrained model with --checkpoint_path')
 
   tf.logging.set_verbosity(tf.logging.INFO)
   with tf.Graph().as_default():
