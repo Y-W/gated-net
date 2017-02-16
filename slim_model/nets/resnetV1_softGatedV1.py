@@ -109,7 +109,7 @@ def bottleneck_softGated(inputs, depth, depth_bottleneck, stride, isGated=False,
     if isGated:
       with tf.variable_scope(sc, 'soft_gate', [inputs]):
         numGateChannel = int(gateChannelRatio * depth_bottleneck)
-        gateInput = slim.conv2s_same(inputs, numGateChannel, 3, stride, rate=rate, scope='conv')
+        gateInput = slim.conv2d_same(inputs, numGateChannel, 3, stride, rate=rate, scope='conv')
         gateInput = tf.reduce_max(gateInput, [1, 2], keep_dims=True, name='max_pool')
         ops.add_to_collections(outputs_collections, gateInput)
         gateVal = slim.conv2d(gateInput, 1, [1, 1], stride=1, activation_fn=tf.sigmoid, scope='gate_val')
