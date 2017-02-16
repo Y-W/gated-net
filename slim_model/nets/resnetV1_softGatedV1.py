@@ -189,7 +189,7 @@ def resnetV1_softGated(inputs,
   """
   with tf.variable_scope(scope, 'resnet_v1', [inputs], reuse=reuse) as sc:
     end_points_collection = sc.name + '_end_points'
-    with slim.arg_scope([slim.conv2d, bottleneck,
+    with slim.arg_scope([slim.conv2d, bottleneck_softGated,
                          resnet_utils.stack_blocks_dense],
                         outputs_collections=end_points_collection):
       with slim.arg_scope([slim.batch_norm], is_training=is_training):
