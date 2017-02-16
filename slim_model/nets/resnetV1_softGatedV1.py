@@ -247,13 +247,13 @@ def resnetV1_softGatedV1_101(inputs,
   """ResNet-101 model of [1]. See resnet_v1() for arg and return description."""
   blocks = [
       resnet_utils.Block(
-          'block1', bottleneck, [(256, 64, 1, {'isGated': False})] * 2 + [(256, 64, 2, {'isGated': False})]),
+          'block1', bottleneck_softGated, [(256, 64, 1, {'isGated': False})] * 2 + [(256, 64, 2, {'isGated': False})]),
       resnet_utils.Block(
-          'block2', bottleneck, [(512, 128, 1, {'isGated': False})] * 3 + [(512, 128, 2, {'isGated': False})]),
+          'block2', bottleneck_softGated, [(512, 128, 1, {'isGated': False})] * 3 + [(512, 128, 2, {'isGated': False})]),
       resnet_utils.Block(
-          'block3', bottleneck, [(1024, 256, 1, {'isGated': True})] * 22 + [(1024, 256, 2, {'isGated': False})]),
+          'block3', bottleneck_softGated, [(1024, 256, 1, {'isGated': True})] * 22 + [(1024, 256, 2, {'isGated': False})]),
       resnet_utils.Block(
-          'block4', bottleneck, [(2048, 512, 1, {'isGated': False})] * 3)
+          'block4', bottleneck_softGated, [(2048, 512, 1, {'isGated': False})] * 3)
   ]
   return resnetV1_softGated(inputs, blocks, num_classes, is_training,
                    global_pool=global_pool, output_stride=output_stride,
