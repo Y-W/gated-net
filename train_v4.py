@@ -470,7 +470,7 @@ def main(_):
       #############################
 
       slim.losses.softmax_cross_entropy(
-          tf.squeeze(logits), labels, label_smoothing=FLAGS.label_smoothing, weight=1.0)
+          tf.squeeze(logits), labels, label_smoothing=FLAGS.label_smoothing, weights=1.0)
       for end_point in end_points:
           if end_point.endswith('gate_val'):
               tf.losses.compute_weighted_loss(end_points[end_point], 
