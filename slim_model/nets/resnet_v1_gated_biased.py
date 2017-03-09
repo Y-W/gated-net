@@ -115,7 +115,7 @@ def bottleneck_gated_biased(inputs, depth, depth_bottleneck, stride, isGated=Fal
         ops.add_to_collections(outputs_collections, gateInput)
         gateVal = slim.conv2d(gateInput, 1, [1, 1], stride=1, activation_fn=gate_fn, scope='gate_val')
         ops.add_to_collections(outputs_collections, gateVal)
-      residual = tf.mul(residual, gateVal, name='gated_residual')
+      residual = tf.multiply(residual, gateVal, name='gated_residual')
       ops.add_to_collections(outputs_collections, residual)
 
     output = tf.nn.relu(shortcut + residual)

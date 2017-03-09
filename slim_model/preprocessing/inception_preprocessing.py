@@ -230,7 +230,7 @@ def preprocess_for_train(image, height, width, bbox,
     tf.image_summary('final_distorted_image',
                      tf.expand_dims(distorted_image, 0))
     distorted_image = tf.sub(distorted_image, 0.5)
-    distorted_image = tf.mul(distorted_image, 2.0)
+    distorted_image = tf.multiply(distorted_image, 2.0)
     return distorted_image
 
 
@@ -271,7 +271,7 @@ def preprocess_for_eval(image, height, width,
                                        align_corners=False)
       image = tf.squeeze(image, [0])
     image = tf.sub(image, 0.5)
-    image = tf.mul(image, 2.0)
+    image = tf.multiply(image, 2.0)
     return image
 
 

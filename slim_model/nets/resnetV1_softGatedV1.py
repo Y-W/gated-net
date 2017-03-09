@@ -113,7 +113,7 @@ def bottleneck_softGated(inputs, depth, depth_bottleneck, stride, isGated=False,
         gateInput = tf.reduce_max(gateInput, [1, 2], keep_dims=True, name='max_pool')
         ops.add_to_collections(outputs_collections, gateInput)
         gateVal = slim.conv2d(gateInput, 1, [1, 1], stride=1, activation_fn=tf.sigmoid, scope='gate_val')
-      residual = tf.mul(residual, gateVal, name='gated_residual')
+      residual = tf.multiply(residual, gateVal, name='gated_residual')
       ops.add_to_collections(outputs_collections, residual)
 
     output = tf.nn.relu(shortcut + residual)
