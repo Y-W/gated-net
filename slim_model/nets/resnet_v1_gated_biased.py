@@ -235,7 +235,7 @@ def resnet_v1_gated_biased_v1(inputs,
       resnet_utils.Block(
           'block4', bottleneck_gated_biased, [(2048, 512, 1, {'isGated': False})] * 3)
   ]
-  return resnetV1_softGated(inputs, blocks, num_classes, is_training,
+  return resnet_v1_gated_biased(inputs, blocks, num_classes, is_training,
                    global_pool=global_pool, output_stride=output_stride,
                    include_root_block=True, reuse=reuse, scope=scope)
 
@@ -257,7 +257,7 @@ def resnet_v1_gated_biased_v2(inputs,
       resnet_utils.Block(
           'block4', bottleneck_gated_biased, [(2048, 512, 1, {'isGated': False})] * 3)
   ]
-  return resnetV1_softGated(inputs, blocks, num_classes, is_training,
+  return resnet_v1_gated_biased(inputs, blocks, num_classes, is_training,
                    global_pool=global_pool, output_stride=output_stride,
                    include_root_block=True, reuse=reuse, scope=scope)
   
