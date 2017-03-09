@@ -67,7 +67,7 @@ tf.app.flags.DEFINE_integer(
 ######################
 
 tf.app.flags.DEFINE_float(
-    'gate_sparsity_weight', 0.01, 'The weight of the gating sparsity penalties.')
+    'gate_sparsity_weight', 0.1, 'The weight of the gating sparsity penalties.')
 
 tf.app.flags.DEFINE_float(
     'weight_decay', 0.00004, 'The weight decay on the model weights.')
