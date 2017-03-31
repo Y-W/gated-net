@@ -67,8 +67,7 @@ slim = tf.contrib.slim
 
 
 @slim.add_arg_scope
-def bottleneck_gated_biased(inputs, depth, depth_bottleneck, stride, isGated=False,
-               gateChannelRatio=0.5, gate_bias=1.0, gate_fn=tf.sigmoid, rate=1, 
+def bottleneck(inputs, depth, depth_bottleneck, stride, rate=1,
                outputs_collections=None, scope=None):
   """Bottleneck residual unit variant with BN after convolutions.
 
@@ -106,17 +105,6 @@ def bottleneck_gated_biased(inputs, depth, depth_bottleneck, stride, isGated=Fal
                                         rate=rate, scope='conv2')
     residual = slim.conv2d(residual, depth, [1, 1], stride=1,
                            activation_fn=None, scope='conv3')
-    
-    if isGated:
-      with tf.variable_scope('gating', [inputs]):
-        numGateChannel = int(gateChannelRatio * depth_bottleneck)
-        gateInput = resnet_utils.conv2d_same(inputs, numGateChannel, 3, stride, rate=rate, scope='conv')
-        gateInput = tf.reduce_mean(gateInput, [1, 2], keep_dims=True, name='average_pool') + gate_bias
-        ops.add_to_collections(outputs_collections, gateInput)
-        gateVal = slim.conv2d(gateInput, 1, [1, 1], stride=1, activation_fn=gate_fn, scope='gate_val')
-        ops.add_to_collections(outputs_collections, gateVal)
-      residual = tf.multiply(residual, gateVal, name='gated_residual')
-      ops.add_to_collections(outputs_collections, residual)
 
     output = tf.nn.relu(shortcut + residual)
 
@@ -125,13 +113,10 @@ def bottleneck_gated_biased(inputs, depth, depth_bottleneck, stride, isGated=Fal
                                             output)
 
 
-def resnet_v1_gated_biased(inputs,
-              blocks,
+def resnet_v1_hard_branch(inputs,
+              blocks1, blocks_branch, blocks2,
               num_classes=None,
               is_training=True,
-              global_pool=True,
-              output_stride=None,
-              include_root_block=True,
               reuse=None,
               scope=None):
   """Generator for v1 ResNet models.
@@ -191,73 +176,64 @@ def resnet_v1_gated_biased(inputs,
   """
   with tf.variable_scope(scope, 'resnet_v1', [inputs], reuse=reuse) as sc:
     end_points_collection = sc.name + '_end_points'
-    with slim.arg_scope([slim.conv2d, bottleneck_gated_biased,
+    with slim.arg_scope([slim.conv2d, bottleneck,
                          resnet_utils.stack_blocks_dense],
                         outputs_collections=end_points_collection):
       with slim.arg_scope([slim.batch_norm], is_training=is_training):
         net = inputs
-        if include_root_block:
-          if output_stride is not None:
-            if output_stride % 4 != 0:
-              raise ValueError('The output_stride needs to be a multiple of 4.')
-            output_stride /= 4
-          net = resnet_utils.conv2d_same(net, 64, 7, stride=2, scope='conv1')
-          net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool1')
-        net = resnet_utils.stack_blocks_dense(net, blocks, output_stride)
-        if global_pool:
-          # Global average pooling.
-          net = tf.reduce_mean(net, [1, 2], name='pool5', keep_dims=True)
-        if num_classes is not None:
-          net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
+        net = resnet_utils.conv2d_same(net, 64, 7, stride=2, scope='conv1')
+        net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool1')
+        net = resnet_utils.stack_blocks_dense(net, blocks1)
+
+        with tf.variable_scope('left_branch', [net], reuse=reuse):
+          net_left = resnet_utils.stack_blocks_dense(net, blocks2)
+          net_left = tf.reduce_mean(net_left, [1, 2], name='pool5', keep_dims=True)
+          net_left = slim.conv2d(net_left, num_classes, [1, 1], activation_fn=None,
                             normalizer_fn=None, scope='logits')
+        with tf.variable_scope('right_branch', [net], reuse=reuse):
+          net_right = resnet_utils.stack_blocks_dense(net, blocks2)
+          net_right = tf.reduce_mean(net_right, [1, 2], name='pool5', keep_dims=True)
+          net_right = slim.conv2d(net_right, num_classes, [1, 1], activation_fn=None,
+                            normalizer_fn=None, scope='logits')
+        with tf.variable_scope('branch_fn', [net], reuse=reuse):
+          branch = resnet_utils.stack_blocks_dense(net, blocks_branch)
+          branch = tf.reduce_mean(branch, [1, 2], name='pool_branch', keep_dims=True)
+          branch = slim.conv2d(branch, 1, [1, 1], activation_fn=tf.tanh, scope='branch_preact')
+          branch = tf.hard_gate(branch, name='branch_val')
+
+        net = net_left * (1.0 - branch) + net_right * branch
+
         # Convert end_points_collection into a dictionary of end_points.
         end_points = slim.utils.convert_collection_to_dict(end_points_collection)
-        if num_classes is not None:
-          end_points['predictions'] = slim.softmax(net, scope='predictions')
+        end_points['predictions'] = slim.softmax(net, scope='predictions')
+        end_points['branch'] = branch
         return net, end_points
 
 
-def resnet_v1_gated_biased_v1(inputs,
+def v1(inputs,
                   num_classes=None,
                   is_training=True,
-                  global_pool=True,
-                  output_stride=None,
                   reuse=None,
-                  scope='resnet_v1_101'):
-  """ResNet-101 model of [1]. See resnet_v1() for arg and return description."""
-  blocks = [
+                  scope='resnet_v1_50'):
+  blocks1 = [
       resnet_utils.Block(
-          'block1', bottleneck_gated_biased, [(256, 64, 1, {'isGated': False})] * 2 + [(256, 64, 2, {'isGated': False})]),
+          'block1', bottleneck, [(256, 64, 1)] * 2 + [(256, 64, 2)]),
       resnet_utils.Block(
-          'block2', bottleneck_gated_biased, [(512, 128, 1, {'isGated': False})] * 3 + [(512, 128, 2, {'isGated': False})]),
-      resnet_utils.Block(
-          'block3', bottleneck_gated_biased, [(1024, 256, 1, {'isGated': True, 'gate_fn': tf.sigmoid})] * 22 + [(1024, 256, 2, {'isGated': False})]),
-      resnet_utils.Block(
-          'block4', bottleneck_gated_biased, [(2048, 512, 1, {'isGated': False})] * 3)
+          'block2', bottleneck, [(512, 128, 1)] * 3 + [(512, 128, 2)]),
   ]
-  return resnet_v1_gated_biased(inputs, blocks, num_classes, is_training,
-                   global_pool=global_pool, output_stride=output_stride,
-                   include_root_block=True, reuse=reuse, scope=scope)
+  blocks_branch = [
+    resnet_utils.Block(
+          'block_br1', bottleneck, [(1024, 256, 2)]),
+      resnet_utils.Block(
+          'block_br2', bottleneck, [(2048, 512, 1)])
+  ]
+  blocks2 = [
+      resnet_utils.Block(
+          'block3', bottleneck, [(1024, 256, 1)] * 22 + [(1024, 256, 2)]),
+      resnet_utils.Block(
+          'block4', bottleneck, [(2048, 512, 1)] * 3)
+  ]
+  return resnet_v1_hard_branch(inputs, blocks1, blocks_branch, blocks2,
+                   num_classes=num_classes, is_training=is_training,
+                   reuse=reuse, scope=scope)
 
-def resnet_v1_gated_biased_v2(inputs,
-                  num_classes=None,
-                  is_training=True,
-                  global_pool=True,
-                  output_stride=None,
-                  reuse=None,
-                  scope='resnet_v1_101'):
-  """ResNet-101 model of [1]. See resnet_v1() for arg and return description."""
-  blocks = [
-      resnet_utils.Block(
-          'block1', bottleneck_gated_biased, [(256, 64, 1, {'isGated': False})] * 2 + [(256, 64, 2, {'isGated': False})]),
-      resnet_utils.Block(
-          'block2', bottleneck_gated_biased, [(512, 128, 1, {'isGated': False})] * 3 + [(512, 128, 2, {'isGated': False})]),
-      resnet_utils.Block(
-          'block3', bottleneck_gated_biased, [(1024, 256, 1, {'isGated': True, 'gate_fn': tf.hard_gate})] * 22 + [(1024, 256, 2, {'isGated': False})]),
-      resnet_utils.Block(
-          'block4', bottleneck_gated_biased, [(2048, 512, 1, {'isGated': False})] * 3)
-  ]
-  return resnet_v1_gated_biased(inputs, blocks, num_classes, is_training,
-                   global_pool=global_pool, output_stride=output_stride,
-                   include_root_block=True, reuse=reuse, scope=scope)
-  

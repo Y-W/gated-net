@@ -20,9 +20,6 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from . import cifarnet_preprocessing
-from . import inception_preprocessing
-from . import lenet_preprocessing
 from . import vgg_preprocessing
 
 slim = tf.contrib.slim
@@ -44,25 +41,10 @@ def get_preprocessing(name, is_training=False):
   Raises:
     ValueError: If Preprocessing `name` is not recognized.
   """
-  preprocessing_fn_map = [
-      ('cifarnet', cifarnet_preprocessing),
-      ('inception', inception_preprocessing),
-      ('lenet', lenet_preprocessing),
-      ('resnet', vgg_preprocessing),
-      ('vgg', vgg_preprocessing),
-  ]
 
-  matched = None
-  for k, v in preprocessing_fn_map:
-    if name.startswith(k):
-      matched = v
-      break
-
-  if matched is None:
-    raise ValueError('Preprocessing name [%s] was not recognized' % name)
 
   def preprocessing_fn(image, output_height, output_width, **kwargs):
-    return matched.preprocess_image(
+    return vgg_preprocessing.preprocess_image(
         image, output_height, output_width, is_training=is_training, **kwargs)
 
   return preprocessing_fn

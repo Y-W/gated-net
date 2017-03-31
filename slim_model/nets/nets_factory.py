@@ -21,69 +21,18 @@ import functools
 
 import tensorflow as tf
 
-from . import alexnet
-from . import cifarnet
-from . import inception
-from . import lenet
-from . import overfeat
+
+from . import resnet_utils
 from . import resnet_v1
-from . import resnet_v2
-from . import vgg
-from . import resnetV1_softGatedV1
-from . import resnet_v1_gated_biased
+from . import resnet_v1_hard_branch
+
 
 slim = tf.contrib.slim
 
-networks_map = {'alexnet_v2': alexnet.alexnet_v2,
-                'cifarnet': cifarnet.cifarnet,
-                'overfeat': overfeat.overfeat,
-                'vgg_a': vgg.vgg_a,
-                'vgg_16': vgg.vgg_16,
-                'vgg_19': vgg.vgg_19,
-                'inception_v1': inception.inception_v1,
-                'inception_v2': inception.inception_v2,
-                'inception_v3': inception.inception_v3,
-                'inception_v4': inception.inception_v4,
-                'inception_resnet_v2': inception.inception_resnet_v2,
-                'lenet': lenet.lenet,
-                'resnet_v1_50': resnet_v1.resnet_v1_50,
-                'resnet_v1_101': resnet_v1.resnet_v1_101,
-                'resnet_v1_152': resnet_v1.resnet_v1_152,
-                'resnet_v1_200': resnet_v1.resnet_v1_200,
-                'resnet_v2_50': resnet_v2.resnet_v2_50,
-                'resnet_v2_101': resnet_v2.resnet_v2_101,
-                'resnet_v2_152': resnet_v2.resnet_v2_152,
-                'resnet_v2_200': resnet_v2.resnet_v2_200,
-                'resnetV1_softGatedV1_101': resnetV1_softGatedV1.resnetV1_softGatedV1_101,
-                'resnet_v1_gated_biased_v1': resnet_v1_gated_biased.resnet_v1_gated_biased_v1,
-                'resnet_v1_gated_biased_v2': resnet_v1_gated_biased.resnet_v1_gated_biased_v2,
+networks_map = {'v1': resnet_v1_hard_branch.v1,
                }
 
-arg_scopes_map = {'alexnet_v2': alexnet.alexnet_v2_arg_scope,
-                  'cifarnet': cifarnet.cifarnet_arg_scope,
-                  'overfeat': overfeat.overfeat_arg_scope,
-                  'vgg_a': vgg.vgg_arg_scope,
-                  'vgg_16': vgg.vgg_arg_scope,
-                  'vgg_19': vgg.vgg_arg_scope,
-                  'inception_v1': inception.inception_v3_arg_scope,
-                  'inception_v2': inception.inception_v3_arg_scope,
-                  'inception_v3': inception.inception_v3_arg_scope,
-                  'inception_v4': inception.inception_v4_arg_scope,
-                  'inception_resnet_v2':
-                  inception.inception_resnet_v2_arg_scope,
-                  'lenet': lenet.lenet_arg_scope,
-                  'resnet_v1_50': resnet_v1.resnet_arg_scope,
-                  'resnet_v1_101': resnet_v1.resnet_arg_scope,
-                  'resnet_v1_152': resnet_v1.resnet_arg_scope,
-                  'resnet_v1_200': resnet_v1.resnet_arg_scope,
-                  'resnet_v2_50': resnet_v2.resnet_arg_scope,
-                  'resnet_v2_101': resnet_v2.resnet_arg_scope,
-                  'resnet_v2_152': resnet_v2.resnet_arg_scope,
-                  'resnet_v2_200': resnet_v2.resnet_arg_scope,
-                  'resnetV1_softGatedV1_101': resnetV1_softGatedV1.resnet_arg_scope,
-                  'resnet_v1_gated_biased_v1': resnet_v1_gated_biased.resnet_arg_scope,
-                  'resnet_v1_gated_biased_v2': resnet_v1_gated_biased.resnet_arg_scope,
-                 }
+default_image_size = 224
 
 
 def get_network_fn(name, num_classes, weight_decay=0.0, is_training=False):
@@ -103,15 +52,13 @@ def get_network_fn(name, num_classes, weight_decay=0.0, is_training=False):
   Raises:
     ValueError: If network `name` is not recognized.
   """
-  if name not in networks_map:
-    raise ValueError('Name of network unknown %s' % name)
-  arg_scope = arg_scopes_map[name](weight_decay=weight_decay)
+
+  arg_scope = resnet_utils.resnet_arg_scope(weight_decay=weight_decay)
   func = networks_map[name]
   @functools.wraps(func)
   def network_fn(images):
     with slim.arg_scope(arg_scope):
       return func(images, num_classes, is_training=is_training)
-  if hasattr(func, 'default_image_size'):
-    network_fn.default_image_size = func.default_image_size
+  network_fn.default_image_size = default_image_size
 
   return network_fn

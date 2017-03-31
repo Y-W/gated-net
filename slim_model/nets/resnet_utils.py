@@ -123,7 +123,7 @@ def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
 
 
 @slim.add_arg_scope
-def stack_blocks_dense(net, blocks, output_stride=None,
+def stack_blocks_dense(net, blocks,
                        outputs_collections=None):
   """Stacks ResNet `Blocks` and controls output feature density.
 
@@ -166,49 +166,18 @@ def stack_blocks_dense(net, blocks, output_stride=None,
   # activations. This allows us to invoke atrous convolution whenever applying
   # the next residual unit would result in the activations having stride larger
   # than the target output_stride.
-  current_stride = 1
-
-  # The atrous convolution rate parameter.
-  rate = 1
 
   for block in blocks:
     with tf.variable_scope(block.scope, 'block', [net]) as sc:
       for i, unit in enumerate(block.args):
-        if output_stride is not None and current_stride > output_stride:
-          raise ValueError('The target output_stride cannot be reached.')
-
         with tf.variable_scope('unit_%d' % (i + 1), values=[net]):
           unit_depth, unit_depth_bottleneck, unit_stride = unit[:3]
-
-          auxArgs = {}
-          if len(unit) == 4:
-            auxArgs = unit[3]
-
-          # If we have reached the target output_stride, then we need to employ
-          # atrous convolution with stride=1 and multiply the atrous rate by the
-          # current unit's stride for use in subsequent layers.
-          if output_stride is not None and current_stride == output_stride:
-            net = block.unit_fn(net,
-                                depth=unit_depth,
-                                depth_bottleneck=unit_depth_bottleneck,
-                                stride=1,
-                                rate=rate,
-                                **auxArgs)
-            rate *= unit_stride
-
-          else:
-            net = block.unit_fn(net,
+          net = block.unit_fn(net,
                                 depth=unit_depth,
                                 depth_bottleneck=unit_depth_bottleneck,
                                 stride=unit_stride,
-                                rate=1,
-                                **auxArgs)
-            current_stride *= unit_stride
+                                rate=1)
       net = slim.utils.collect_named_outputs(outputs_collections, sc.name, net)
-
-  if output_stride is not None and current_stride != output_stride:
-    raise ValueError('The target output_stride cannot be reached.')
-
   return net
 
 
