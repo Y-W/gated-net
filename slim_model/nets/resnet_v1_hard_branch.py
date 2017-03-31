@@ -196,7 +196,8 @@ def resnet_v1_hard_branch(inputs,
           net_right = slim.conv2d(net_right, num_classes, [1, 1], activation_fn=None,
                             normalizer_fn=None, scope='logits')
         with tf.variable_scope('branch_fn', [net], reuse=reuse):
-          branch = resnet_utils.stack_blocks_dense(net, blocks_branch)
+          branch = tf.stop_gradient(net)
+          branch = resnet_utils.stack_blocks_dense(branch, blocks_branch)
           branch = tf.reduce_mean(branch, [1, 2], name='pool_branch', keep_dims=True)
           branch = slim.conv2d(branch, 1, [1, 1], activation_fn=tf.tanh, scope='branch_preact')
           branch = tf.hard_gate(branch, name='branch_val')
