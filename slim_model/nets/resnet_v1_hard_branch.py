@@ -229,7 +229,7 @@ def v1(inputs,
   ]
   blocks2 = [
       resnet_utils.Block(
-          'block3', bottleneck, [(1024, 256, 1)] * 22 + [(1024, 256, 2)]),
+          'block3', bottleneck, [(1024, 256, 1)] * 5 + [(1024, 256, 2)]),
       resnet_utils.Block(
           'block4', bottleneck, [(2048, 512, 1)] * 3)
   ]
