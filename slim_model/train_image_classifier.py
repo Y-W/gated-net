@@ -470,7 +470,7 @@ def main(_):
 
       slim.losses.softmax_cross_entropy(
           tf.squeeze(logits), labels, label_smoothing=FLAGS.label_smoothing, weights=1.0)
-      tf.losses.compute_weighted_loss(tf.nn.relu(tf.abs(end_points['branch']-0.5) - 0.2), weights=10.0)
+      tf.losses.compute_weighted_loss(tf.nn.relu(tf.abs(tf.reduce_mean(end_points['branch'])-0.5) - 0.2), weights=10.0)
 
       return end_points
 
