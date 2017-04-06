@@ -272,7 +272,7 @@ def _get_init_fn():
     excluded = False
     if not excluded:
       var_name = var.op.name
-      var_name = var_name.replace('/left_branch', '')
+    #   var_name = var_name.replace('/left_branch', '')
       var_name = var_name.replace('/right_branch', '')
       variables_to_restore[var_name] = var
 
