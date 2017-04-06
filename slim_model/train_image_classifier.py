@@ -337,7 +337,7 @@ def main(_):
 
     train_image_size = FLAGS.train_image_size
 
-    image = vgg_preprocessing.vgg_preprocessing(image, train_image_size, train_image_size)
+    image = vgg_preprocessing.preprocess_image(image, train_image_size, train_image_size)
 
     images, labels = tf.train.batch(
         [image, label],

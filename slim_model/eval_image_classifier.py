@@ -97,7 +97,7 @@ def main(_):
 
     eval_image_size = FLAGS.eval_image_size
 
-    image = vgg_preprocessing.vgg_preprocessing(image, eval_image_size, eval_image_size)
+    image = vgg_preprocessing.preprocess_image(image, eval_image_size, eval_image_size, is_training=False)
 
     images, labels = tf.train.batch(
         [image, label],
