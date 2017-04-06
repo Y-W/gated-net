@@ -205,7 +205,7 @@ def resnet_v1_hard_branch(inputs,
           branch = branch_prob - tf.stop_gradient(tf.random_uniform(tf.shape(branch_prob)))
           branch = tf.hard_gate(branch, name='branch_val')
 
-        net = net_left * (1.0 - branch) + net_right * branch
+        net = net_left # * (1.0 - branch) + net_right * branch
 
         # Convert end_points_collection into a dictionary of end_points.
         end_points = slim.utils.convert_collection_to_dict(end_points_collection)
