@@ -171,8 +171,6 @@ def _configure_learning_rate(num_samples_per_epoch, global_step):
   """
   decay_steps = int(num_samples_per_epoch / FLAGS.batch_size *
                     FLAGS.num_epochs_per_decay)
-  if FLAGS.sync_replicas:
-    decay_steps /= FLAGS.replicas_to_aggregate
 
   if FLAGS.learning_rate_decay_type == 'exponential':
     return tf.train.exponential_decay(FLAGS.learning_rate,
@@ -337,7 +335,7 @@ def main(_):
 
     train_image_size = FLAGS.train_image_size
 
-    image = vgg_preprocessing.preprocess_image(image, train_image_size, train_image_size)
+    image = vgg_preprocessing.preprocess_image(image, train_image_size, train_image_size, is_training=True)
 
     images, labels = tf.train.batch(
         [image, label],
