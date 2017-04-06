@@ -27,7 +27,7 @@ tf.app.flags.DEFINE_integer(
     'The number of parallel readers that read data from the dataset.')
 
 tf.app.flags.DEFINE_integer(
-    'num_preprocessing_threads', 4,
+    'num_preprocessing_threads', 8,
     'The number of threads used to create the batches.')
 
 tf.app.flags.DEFINE_integer(
@@ -295,8 +295,8 @@ def _get_variables_to_train():
   Returns:
     A list of variables to train by the optimizer.
   """
-  return [v for v in tf.trainable_variables() if v.name.startswith('resnet_v1_50/left_branch') or
-                                                 v.name.startswith('resnet_v1_50/right_branch') or
+  return [v for v in tf.trainable_variables() if v.name.startswith('resnet_v1_50/left_branch_NO') or
+                                                 v.name.startswith('resnet_v1_50/right_branch_NO') or
                                                  v.name.startswith('resnet_v1_50/branch_fn')]
 
 def main(_):
@@ -363,7 +363,7 @@ def main(_):
       slim.losses.softmax_cross_entropy(
           tf.squeeze(logits), labels, label_smoothing=FLAGS.label_smoothing, weights=1.0)
       current_bias = tf.reduce_mean(end_points['branch_prob']) - 0.5
-      tf.losses.compute_weighted_loss(tf.nn.l2_loss(current_bias), weights=10.0)
+      tf.losses.compute_weighted_loss(tf.nn.l2_loss(current_bias), weights=100.0)
 
       return end_points
 
