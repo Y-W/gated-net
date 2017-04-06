@@ -431,7 +431,6 @@ def main(_):
         logdir=FLAGS.train_dir,
         init_fn=_get_init_fn(),
         summary_op=summary_op,
-        number_of_steps=FLAGS.max_number_of_steps,
         log_every_n_steps=FLAGS.log_every_n_steps,
         save_summaries_secs=FLAGS.save_summaries_secs,
         save_interval_secs=FLAGS.save_interval_secs)
