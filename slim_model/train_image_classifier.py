@@ -345,7 +345,7 @@ def main(_):
     labels = slim.one_hot_encoding(
         labels, dataset.num_classes - FLAGS.labels_offset)
     batch_queue = slim.prefetch_queue.prefetch_queue(
-        [images, labels], capacity=2)
+        [images, labels], capacity=10)
 
 
     ####################
@@ -362,7 +362,8 @@ def main(_):
 
       slim.losses.softmax_cross_entropy(
           tf.squeeze(logits), labels, label_smoothing=FLAGS.label_smoothing, weights=1.0)
-    #   tf.losses.compute_weighted_loss(tf.nn.relu(tf.abs(tf.reduce_mean(end_points['branch'])-0.5) - 0.2), weights=10.0)
+      current_bias = tf.reduce_mean(end_points['branch_prob']) - 0.5
+      tf.losses.compute_weighted_loss(tf.nn.l2_loss(current_bias), weights=10.0)
 
       return end_points
 

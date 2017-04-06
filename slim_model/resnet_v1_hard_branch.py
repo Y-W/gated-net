@@ -201,8 +201,8 @@ def resnet_v1_hard_branch(inputs,
           branch = tf.stop_gradient(net)
           branch = resnet_utils.stack_blocks_dense(branch, blocks_branch)
           branch = tf.reduce_mean(branch, [1, 2], name='pool_branch', keep_dims=True)
-          branch = slim.conv2d(branch, 1, [1, 1], activation_fn=tf.sigmoid, scope='branch_preact')
-          branch = branch - tf.stop_gradient(tf.random_uniform(tf.shape(branch)))
+          branch_prob = slim.conv2d(branch, 1, [1, 1], activation_fn=tf.sigmoid, scope='branch_preact')
+          branch = branch_prob - tf.stop_gradient(tf.random_uniform(tf.shape(branch_prob)))
           branch = tf.hard_gate(branch, name='branch_val')
 
         net = net_left * (1.0 - branch) + net_right * branch
@@ -211,6 +211,7 @@ def resnet_v1_hard_branch(inputs,
         end_points = slim.utils.convert_collection_to_dict(end_points_collection)
         end_points['predictions'] = slim.softmax(net, scope='predictions')
         end_points['branch'] = branch
+        end_points['branch_prob'] = branch_prob
         return net, end_points
 
 
