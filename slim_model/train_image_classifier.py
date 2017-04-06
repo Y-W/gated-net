@@ -9,15 +9,11 @@ import re
 import tensorflow as tf
 
 from tensorflow.python.ops import control_flow_ops
-from datasets import dataset_factory
-from deployment import model_deploy
-from nets import nets_factory
-from preprocessing import preprocessing_factory
+import imagenet
+import resnet_v1_hard_branch
+import vgg_preprocessing
 
 slim = tf.contrib.slim
-
-tf.app.flags.DEFINE_string(
-    'master', '', 'The address of the TensorFlow master to use.')
 
 ###############################################################################
 # Need to Specify
@@ -25,19 +21,6 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_string(
     'train_dir', None,
     'Directory where checkpoints and event logs are written to.')
-
-tf.app.flags.DEFINE_integer('num_clones', 1,
-                            'Number of model clones to deploy.')
-
-tf.app.flags.DEFINE_boolean('clone_on_cpu', False,
-                            'Use CPUs to deploy clones.')
-
-tf.app.flags.DEFINE_integer('worker_replicas', 1, 'Number of worker replicas.')
-
-tf.app.flags.DEFINE_integer(
-    'num_ps_tasks', 0,
-    'The number of parameter servers. If the value is 0, then the parameters '
-    'are handled locally by the worker.')
 
 tf.app.flags.DEFINE_integer(
     'num_readers', 4,
@@ -58,9 +41,6 @@ tf.app.flags.DEFINE_integer(
 tf.app.flags.DEFINE_integer(
     'save_interval_secs', 300,
     'The frequency with which the model is saved, in seconds.')
-
-tf.app.flags.DEFINE_integer(
-    'task', 0, 'Task id of the replica running the training.')
 
 ######################
 # Optimization Flags #
@@ -139,25 +119,9 @@ tf.app.flags.DEFINE_float(
     'num_epochs_per_decay', 1.0,
     'Number of epochs after which learning rate decays.')
 
-tf.app.flags.DEFINE_bool(
-    'sync_replicas', False,
-    'Whether or not to synchronize the replicas during training.')
-
-tf.app.flags.DEFINE_integer(
-    'replicas_to_aggregate', 1,
-    'The Number of gradients to collect before updating params.')
-
-tf.app.flags.DEFINE_float(
-    'moving_average_decay', None,
-    'The decay to use for the moving average.'
-    'If left as None, then moving averages are not used.')
-
 #######################
 # Dataset Flags #
 #######################
-
-tf.app.flags.DEFINE_string(
-    'dataset_name', 'imagenet', 'The name of the dataset to load.')
 
 tf.app.flags.DEFINE_string(
     'dataset_split_name', 'train', 'The name of the train/test split.')
@@ -171,21 +135,11 @@ tf.app.flags.DEFINE_integer(
     'evaluate the VGG and ResNet architectures which do not use a background '
     'class for the ImageNet dataset.')
 
-tf.app.flags.DEFINE_string(
-    'model_name', 'v1', 'The name of the architecture to train.')
-
-tf.app.flags.DEFINE_string(
-    'preprocessing_name', None, 'The name of the preprocessing to use. If left '
-    'as `None`, then the model_name flag is used.')
-
 tf.app.flags.DEFINE_integer(
     'batch_size', 64, 'The number of samples in each batch.')
 
 tf.app.flags.DEFINE_integer(
     'train_image_size', 224, 'Train image size')
-
-tf.app.flags.DEFINE_integer('max_number_of_steps', None,
-                            'The maximum number of training steps.')
 
 #####################
 # Fine-Tuning Flags #
@@ -194,16 +148,6 @@ tf.app.flags.DEFINE_integer('max_number_of_steps', None,
 tf.app.flags.DEFINE_string(
     'checkpoint_path', None,
     'The path to a checkpoint from which to fine-tune.')
-
-tf.app.flags.DEFINE_string(
-    'checkpoint_exclude_scopes', None,
-    'Comma-separated list of scopes of variables to exclude when restoring '
-    'from a checkpoint.')
-
-tf.app.flags.DEFINE_string(
-    'trainable_scopes', None,
-    'Comma-separated list of scopes to filter the set of variables to train.'
-    'By default, None would train all the variables.')
 
 tf.app.flags.DEFINE_boolean(
     'ignore_missing_vars', True,
@@ -304,14 +248,6 @@ def _configure_optimizer(learning_rate):
   return optimizer
 
 
-def _add_variables_summaries(learning_rate):
-  summaries = []
-  for variable in slim.get_model_variables():
-    summaries.append(tf.summary.histogram(variable.op.name, variable))
-  summaries.append(tf.summary.scalar('training/Learning Rate', learning_rate))
-  return summaries
-
-
 def _get_init_fn():
   """Returns a function run by the chief worker to warm-start the training.
 
@@ -332,20 +268,10 @@ def _get_init_fn():
         % FLAGS.train_dir)
     return None
 
-  exclusions = []
-  if FLAGS.checkpoint_exclude_scopes:
-    exclusions = [scope.strip()
-                  for scope in FLAGS.checkpoint_exclude_scopes.split(',')]
-
-
   # TODO(sguada) variables.filter_variables()
   variables_to_restore = {}
   for var in slim.get_model_variables():
     excluded = False
-    for exclusion in exclusions:
-      if var.op.name.startswith(exclusion):
-        excluded = True
-        break
     if not excluded:
       var_name = var.op.name
       var_name = var_name.replace('/left_branch', '')
@@ -371,17 +297,9 @@ def _get_variables_to_train():
   Returns:
     A list of variables to train by the optimizer.
   """
-  if FLAGS.trainable_scopes is None:
-    return tf.trainable_variables()
-  else:
-    scopes = [scope.strip() for scope in FLAGS.trainable_scopes.split(',')]
-
-  variables_to_train = []
-  for scope in scopes:
-    variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
-    variables_to_train.extend(variables)
-  return variables_to_train
-
+  return [v for v in tf.trainable_variables() if v.name.startswith('resnet_v1_50/left_branch') or
+                                                 v.name.startswith('resnet_v1_50/right_branch') or
+                                                 v.name.startswith('resnet_v1_50/branch_fn')]
 
 def main(_):
   if not FLAGS.dataset_dir:
@@ -393,73 +311,49 @@ def main(_):
 
   tf.logging.set_verbosity(tf.logging.INFO)
   with tf.Graph().as_default():
-    ######################
-    # Config model_deploy#
-    ######################
-    deploy_config = model_deploy.DeploymentConfig(
-        num_clones=FLAGS.num_clones,
-        clone_on_cpu=FLAGS.clone_on_cpu,
-        replica_id=FLAGS.task,
-        num_replicas=FLAGS.worker_replicas,
-        num_ps_tasks=FLAGS.num_ps_tasks)
-
     # Create global_step
-    with tf.device(deploy_config.variables_device()):
-      global_step = slim.create_global_step()
+    global_step = slim.create_global_step()
 
-    ######################
-    # Select the dataset #
-    ######################
-    dataset = dataset_factory.get_dataset(
-        FLAGS.dataset_name, FLAGS.dataset_split_name, FLAGS.dataset_dir)
+    dataset = imagenet.get_split(FLAGS.dataset_split_name, FLAGS.dataset_dir)
 
     ####################
     # Select the network #
     ####################
-    network_fn = nets_factory.get_network_fn(
-        FLAGS.model_name,
+    network_fn = resnet_v1_hard_branch.v1_fn(
         num_classes=(dataset.num_classes - FLAGS.labels_offset),
         weight_decay=FLAGS.weight_decay,
-        is_training=True)
-
-    #####################################
-    # Select the preprocessing function #
-    #####################################
-    preprocessing_name = FLAGS.preprocessing_name or FLAGS.model_name
-    image_preprocessing_fn = preprocessing_factory.get_preprocessing(
-        preprocessing_name,
         is_training=True)
 
     ##############################################################
     # Create a dataset provider that loads data from the dataset #
     ##############################################################
-    with tf.device(deploy_config.inputs_device()):
-      provider = slim.dataset_data_provider.DatasetDataProvider(
-          dataset,
-          num_readers=FLAGS.num_readers,
-          common_queue_capacity=20 * FLAGS.batch_size,
-          common_queue_min=10 * FLAGS.batch_size)
-      [image, label] = provider.get(['image', 'label'])
-      label -= FLAGS.labels_offset
+    provider = slim.dataset_data_provider.DatasetDataProvider(
+        dataset,
+        num_readers=FLAGS.num_readers,
+        common_queue_capacity=20 * FLAGS.batch_size,
+        common_queue_min=10 * FLAGS.batch_size)
+    [image, label] = provider.get(['image', 'label'])
+    label -= FLAGS.labels_offset
 
-      train_image_size = FLAGS.train_image_size or network_fn.default_image_size
+    train_image_size = FLAGS.train_image_size
 
-      image = image_preprocessing_fn(image, train_image_size, train_image_size)
+    image = vgg_preprocessing.vgg_preprocessing(image, train_image_size, train_image_size)
 
-      images, labels = tf.train.batch(
-          [image, label],
-          batch_size=FLAGS.batch_size,
-          num_threads=FLAGS.num_preprocessing_threads,
-          capacity=5 * FLAGS.batch_size)
-      labels = slim.one_hot_encoding(
-          labels, dataset.num_classes - FLAGS.labels_offset)
-      batch_queue = slim.prefetch_queue.prefetch_queue(
-          [images, labels], capacity=2 * deploy_config.num_clones)
+    images, labels = tf.train.batch(
+        [image, label],
+        batch_size=FLAGS.batch_size,
+        num_threads=FLAGS.num_preprocessing_threads,
+        capacity=5 * FLAGS.batch_size)
+    labels = slim.one_hot_encoding(
+        labels, dataset.num_classes - FLAGS.labels_offset)
+    batch_queue = slim.prefetch_queue.prefetch_queue(
+        [images, labels], capacity=2)
+
 
     ####################
     # Define the model #
     ####################
-    def clone_fn(batch_queue):
+    def net_fn(batch_queue):
       """Allows data parallelism by creating multiple clones of network_fn."""
       images, labels = batch_queue.dequeue()
       logits, end_points = network_fn(images)
@@ -470,80 +364,52 @@ def main(_):
 
       slim.losses.softmax_cross_entropy(
           tf.squeeze(logits), labels, label_smoothing=FLAGS.label_smoothing, weights=1.0)
-      tf.losses.compute_weighted_loss(tf.nn.relu(tf.abs(tf.reduce_mean(end_points['branch'])-0.5) - 0.2), weights=10.0)
+    #   tf.losses.compute_weighted_loss(tf.nn.relu(tf.abs(tf.reduce_mean(end_points['branch'])-0.5) - 0.2), weights=10.0)
 
       return end_points
 
     # Gather initial summaries.
     summaries = set(tf.get_collection(tf.GraphKeys.SUMMARIES))
 
-    clones = model_deploy.create_clones(deploy_config, clone_fn, [batch_queue])
-    first_clone_scope = deploy_config.clone_scope(0)
-    # Gather update_ops from the first clone. These contain, for example,
-    # the updates for the batch_norm variables created by network_fn.
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, first_clone_scope)
+    net = net_fn(batch_queue)
+
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
     # Add summaries for end_points.
-    end_points = clones[0].outputs
-    for end_point in end_points:
-      x = end_points[end_point]
+    for end_point in net:
+      x = net[end_point]
       summaries.add(tf.summary.histogram('activations/' + end_point, x))
     #   summaries.add(tf.summary.scalar('sparsity/' + end_point,
     #                                   tf.nn.zero_fraction(x)))
 
     # Add summaries for losses.
-    for loss in tf.get_collection(tf.GraphKeys.LOSSES, first_clone_scope):
+    for loss in tf.get_collection(tf.GraphKeys.LOSSES):
       summaries.add(tf.summary.scalar('losses/%s' % loss.op.name, loss))
 
     # Add summaries for variables.
     for variable in slim.get_model_variables():
       summaries.add(tf.summary.histogram(variable.op.name, variable))
 
-    #################################
-    # Configure the moving averages #
-    #################################
-    if FLAGS.moving_average_decay:
-      moving_average_variables = slim.get_model_variables()
-      variable_averages = tf.train.ExponentialMovingAverage(
-          FLAGS.moving_average_decay, global_step)
-    else:
-      moving_average_variables, variable_averages = None, None
-
     #########################################
     # Configure the optimization procedure. #
     #########################################
-    with tf.device(deploy_config.optimizer_device()):
-      learning_rate = _configure_learning_rate(dataset.num_samples, global_step)
-      optimizer = _configure_optimizer(learning_rate)
-      summaries.add(tf.summary.scalar('learning_rate', learning_rate))
-
-    if FLAGS.sync_replicas:
-      # If sync_replicas is enabled, the averaging will be done in the chief
-      # queue runner.
-      optimizer = tf.train.SyncReplicasOptimizer(
-          opt=optimizer,
-          replicas_to_aggregate=FLAGS.replicas_to_aggregate,
-          variable_averages=variable_averages,
-          variables_to_average=moving_average_variables,
-          replica_id=tf.constant(FLAGS.task, tf.int32, shape=()),
-          total_num_replicas=FLAGS.worker_replicas)
-    elif FLAGS.moving_average_decay:
-      # Update ops executed locally by trainer.
-      update_ops.append(variable_averages.apply(moving_average_variables))
+    learning_rate = _configure_learning_rate(dataset.num_samples, global_step)
+    optimizer = _configure_optimizer(learning_rate)
+    summaries.add(tf.summary.scalar('learning_rate', learning_rate))
 
     # Variables to train.
     variables_to_train = _get_variables_to_train()
 
     #  and returns a train_tensor and summary_op
-    total_loss, clones_gradients = model_deploy.optimize_clones(
-        clones,
-        optimizer,
-        var_list=variables_to_train)
+    pred_loss = tf.add_n(tf.get_collection(tf.GraphKeys.LOSSES), name='Pred_Loss')
+    reg_loss = tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='Reg_Loss')
+    total_loss = tf.add(pred_loss, reg_loss, name='total_loss')
+    gradients = optimizer.compute_gradients(total_loss, var_list=variables_to_train)
     # Add total_loss to summary.
     summaries.add(tf.summary.scalar('total_loss', total_loss))
 
     # Create gradient updates.
-    grad_updates = optimizer.apply_gradients(clones_gradients,
+    grad_updates = optimizer.apply_gradients(gradients,
                                              global_step=global_step)
     update_ops.append(grad_updates)
 
@@ -553,8 +419,7 @@ def main(_):
 
     # Add the summaries from the first clone. These contain the summaries
     # created by model_fn and either optimize_clones() or _gather_clone_loss().
-    summaries |= set(tf.get_collection(tf.GraphKeys.SUMMARIES,
-                                       first_clone_scope))
+    summaries |= set(tf.get_collection(tf.GraphKeys.SUMMARIES))
 
     # Merge all summaries together.
     summary_op = tf.summary.merge(list(summaries), name='summary_op')
@@ -566,15 +431,12 @@ def main(_):
     slim.learning.train(
         train_tensor,
         logdir=FLAGS.train_dir,
-        master=FLAGS.master,
-        is_chief=(FLAGS.task == 0),
         init_fn=_get_init_fn(),
         summary_op=summary_op,
         number_of_steps=FLAGS.max_number_of_steps,
         log_every_n_steps=FLAGS.log_every_n_steps,
         save_summaries_secs=FLAGS.save_summaries_secs,
-        save_interval_secs=FLAGS.save_interval_secs,
-        sync_optimizer=optimizer if FLAGS.sync_replicas else None)
+        save_interval_secs=FLAGS.save_interval_secs)
 
 
 if __name__ == '__main__':

@@ -199,7 +199,8 @@ def resnet_v1_hard_branch(inputs,
           branch = tf.stop_gradient(net)
           branch = resnet_utils.stack_blocks_dense(branch, blocks_branch)
           branch = tf.reduce_mean(branch, [1, 2], name='pool_branch', keep_dims=True)
-          branch = slim.conv2d(branch, 1, [1, 1], activation_fn=tf.tanh, scope='branch_preact')
+          branch = slim.conv2d(branch, 1, [1, 1], activation_fn=tf.sigmoid, scope='branch_preact')
+          branch = branch - tf.stop_gradient(tf.random_uniform(tf.shape(branch)))
           branch = tf.hard_gate(branch, name='branch_val')
 
         net = net_left * (1.0 - branch) + net_right * branch
@@ -238,3 +239,29 @@ def v1(inputs,
                    num_classes=num_classes, is_training=is_training,
                    reuse=reuse, scope=scope)
 
+def v1_fn(name, num_classes, weight_decay=0.0, is_training=False):
+  """Returns a network_fn such as `logits, end_points = network_fn(images)`.
+
+  Args:
+    name: The name of the network.
+    num_classes: The number of classes to use for classification.
+    weight_decay: The l2 coefficient for the model weights.
+    is_training: `True` if the model is being used for training and `False`
+      otherwise.
+
+  Returns:
+    network_fn: A function that applies the model to a batch of images. It has
+      the following signature:
+        logits, end_points = network_fn(images)
+  Raises:
+    ValueError: If network `name` is not recognized.
+  """
+
+  arg_scope = resnet_utils.resnet_arg_scope(weight_decay=weight_decay)
+  func = v1
+  @functools.wraps(func)
+  def network_fn(images):
+    with slim.arg_scope(arg_scope):
+      return func(images, num_classes, is_training=is_training)
+
+  return network_fn

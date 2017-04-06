@@ -21,21 +21,14 @@ from __future__ import print_function
 import math
 import tensorflow as tf
 
-from datasets import dataset_factory
-from nets import nets_factory
+import imagenet
+import resnet_v1_hard_branch
 from preprocessing import preprocessing_factory
 
 slim = tf.contrib.slim
 
 tf.app.flags.DEFINE_integer(
     'batch_size', 100, 'The number of samples in each batch.')
-
-tf.app.flags.DEFINE_integer(
-    'max_num_batches', None,
-    'Max number of batches to evaluate by default use all.')
-
-tf.app.flags.DEFINE_string(
-    'master', '', 'The address of the TensorFlow master to use.')
 
 tf.app.flags.DEFINE_string(
     'checkpoint_path', '/tmp/tfmodel/',
@@ -50,9 +43,6 @@ tf.app.flags.DEFINE_integer(
     'The number of threads used to create the batches.')
 
 tf.app.flags.DEFINE_string(
-    'dataset_name', 'imagenet', 'The name of the dataset to load.')
-
-tf.app.flags.DEFINE_string(
     'dataset_split_name', 'validation', 'The name of the train/test split.')
 
 tf.app.flags.DEFINE_string(
@@ -63,18 +53,6 @@ tf.app.flags.DEFINE_integer(
     'An offset for the labels in the dataset. This flag is primarily used to '
     'evaluate the VGG and ResNet architectures which do not use a background '
     'class for the ImageNet dataset.')
-
-tf.app.flags.DEFINE_string(
-    'model_name', 'v1', 'The name of the architecture to evaluate.')
-
-tf.app.flags.DEFINE_string(
-    'preprocessing_name', None, 'The name of the preprocessing to use. If left '
-    'as `None`, then the model_name flag is used.')
-
-tf.app.flags.DEFINE_float(
-    'moving_average_decay', None,
-    'The decay to use for the moving average.'
-    'If left as None, then moving averages are not used.')
 
 tf.app.flags.DEFINE_integer(
     'eval_image_size', 224, 'Eval image size')
@@ -97,14 +75,12 @@ def main(_):
     ######################
     # Select the dataset #
     ######################
-    dataset = dataset_factory.get_dataset(
-        FLAGS.dataset_name, FLAGS.dataset_split_name, FLAGS.dataset_dir)
+    dataset = imagenet.get_split(FLAGS.dataset_split_name, FLAGS.dataset_dir)
 
     ####################
     # Select the model #
     ####################
-    network_fn = nets_factory.get_network_fn(
-        FLAGS.model_name,
+    network_fn = resnet_v1_hard_branch.v1_fn(
         num_classes=(dataset.num_classes - FLAGS.labels_offset),
         is_training=False)
 
@@ -119,17 +95,9 @@ def main(_):
     [image, label] = provider.get(['image', 'label'])
     label -= FLAGS.labels_offset
 
-    #####################################
-    # Select the preprocessing function #
-    #####################################
-    preprocessing_name = FLAGS.preprocessing_name or FLAGS.model_name
-    image_preprocessing_fn = preprocessing_factory.get_preprocessing(
-        preprocessing_name,
-        is_training=False)
+    eval_image_size = FLAGS.eval_image_size
 
-    eval_image_size = FLAGS.eval_image_size or network_fn.default_image_size
-
-    image = image_preprocessing_fn(image, eval_image_size, eval_image_size)
+    image = vgg_preprocessing.vgg_preprocessing(image, eval_image_size, eval_image_size)
 
     images, labels = tf.train.batch(
         [image, label],
@@ -143,14 +111,7 @@ def main(_):
     logits, _ = network_fn(images)
     logits = tf.squeeze(logits)
 
-    if FLAGS.moving_average_decay:
-      variable_averages = tf.train.ExponentialMovingAverage(
-          FLAGS.moving_average_decay, tf_global_step)
-      variables_to_restore = variable_averages.variables_to_restore(
-          slim.get_model_variables())
-      variables_to_restore[tf_global_step.op.name] = tf_global_step
-    else:
-      variables_to_restore = slim.get_variables_to_restore()
+    variables_to_restore = slim.get_variables_to_restore()
 
     predictions = tf.argmax(logits, 1)
     labels = tf.squeeze(labels)
@@ -170,11 +131,7 @@ def main(_):
       tf.add_to_collection(tf.GraphKeys.SUMMARIES, op)
 
     # TODO(sguada) use num_epochs=1
-    if FLAGS.max_num_batches:
-      num_batches = FLAGS.max_num_batches
-    else:
-      # This ensures that we make a single pass over all of the data.
-      num_batches = math.ceil(dataset.num_samples / float(FLAGS.batch_size))
+    num_batches = math.ceil(dataset.num_samples / float(FLAGS.batch_size))
 
     if tf.gfile.IsDirectory(FLAGS.checkpoint_path):
       checkpoint_path = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
@@ -184,7 +141,6 @@ def main(_):
     tf.logging.info('Evaluating %s' % checkpoint_path)
 
     slim.evaluation.evaluate_once(
-        master=FLAGS.master,
         checkpoint_path=checkpoint_path,
         logdir=FLAGS.eval_dir,
         num_evals=num_batches,
