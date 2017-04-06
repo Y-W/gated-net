@@ -59,7 +59,7 @@ from __future__ import print_function
 import tensorflow as tf
 from tensorflow.python.framework import ops
 
-from . import resnet_utils
+import resnet_utils
 
 
 resnet_arg_scope = resnet_utils.resnet_arg_scope
