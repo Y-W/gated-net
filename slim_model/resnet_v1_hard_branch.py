@@ -239,7 +239,7 @@ def v1(inputs,
                    num_classes=num_classes, is_training=is_training,
                    reuse=reuse, scope=scope)
 
-def v1_fn(name, num_classes, weight_decay=0.0, is_training=False):
+def v1_fn(num_classes, weight_decay=0.0, is_training=False):
   """Returns a network_fn such as `logits, end_points = network_fn(images)`.
 
   Args:
