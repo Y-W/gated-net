@@ -23,7 +23,7 @@ import tensorflow as tf
 
 import imagenet
 import resnet_v1_hard_branch
-from preprocessing import preprocessing_factory
+import vgg_preprocessing
 
 slim = tf.contrib.slim
 
