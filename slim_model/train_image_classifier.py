@@ -47,10 +47,10 @@ tf.app.flags.DEFINE_integer(
 ######################
 
 tf.app.flags.DEFINE_float(
-    'weight_decay', 0.00004, 'The weight decay on the model weights.')
+    'weight_decay', 0.0, 'The weight decay on the model weights.') # 0.00004
 
 tf.app.flags.DEFINE_string(
-    'optimizer', 'rmsprop',
+    'optimizer', 'momentum',
     'The name of the optimizer, one of "adadelta", "adagrad", "adam",'
     '"ftrl", "momentum", "sgd" or "rmsprop".')
 
@@ -371,7 +371,12 @@ def main(_):
           tf.squeeze(logits), labels, label_smoothing=FLAGS.label_smoothing, weights=1.0)
     #   current_bias = tf.abs(tf.reduce_mean(end_points['branch_prob']) - 0.5)
     #   tf.losses.compute_weighted_loss(tf.nn.relu(current_bias - 0.1), weights=10.0)
-
+      predictions = tf.argmax(tf.squeeze(logits), 1)
+      accuracy = tf.reduce_mean(tf.equal(predictions, tf.argmax(labels, axis=1)))
+      moving_accuracy = tf.train.ExponentialMovingAverage(decay=0.99)
+      moving_accuracy_op = moving_accuracy.apply([accuracy])
+      tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, moving_accuracy_op)
+      end_points['moving_accuracy'] = moving_accuracy.average(accuracy)
       return end_points
 
     # Gather initial summaries.
@@ -420,6 +425,9 @@ def main(_):
     update_ops.append(grad_updates)
 
     update_op = tf.group(*update_ops)
+
+    total_loss = tf.Print(total_loss, [net['moving_accuracy']], 'Moving_Accuracy')
+
     train_tensor = control_flow_ops.with_dependencies([update_op], total_loss,
                                                       name='train_op')
 
