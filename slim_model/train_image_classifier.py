@@ -103,7 +103,7 @@ tf.app.flags.DEFINE_string(
     'Specifies how the learning rate is decayed. One of "fixed", "exponential",'
     ' or "polynomial"')
 
-tf.app.flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate.')
+tf.app.flags.DEFINE_float('learning_rate', 0.0001, 'Initial learning rate.')
 
 tf.app.flags.DEFINE_float(
     'end_learning_rate', 0.0001,
@@ -113,7 +113,7 @@ tf.app.flags.DEFINE_float(
     'label_smoothing', 0.0, 'The amount of label smoothing.')
 
 tf.app.flags.DEFINE_float(
-    'learning_rate_decay_factor', 0.8, 'Learning rate decay factor.')
+    'learning_rate_decay_factor', 1.0, 'Learning rate decay factor.')
 
 tf.app.flags.DEFINE_float(
     'num_epochs_per_decay', 1.0,
