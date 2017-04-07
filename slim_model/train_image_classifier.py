@@ -368,8 +368,8 @@ def main(_):
 
       slim.losses.softmax_cross_entropy(
           tf.squeeze(logits), labels, label_smoothing=FLAGS.label_smoothing, weights=1.0)
-      current_bias = tf.reduce_mean(end_points['branch_prob']) - 0.5
-      tf.losses.compute_weighted_loss(tf.nn.l2_loss(current_bias), weights=100.0)
+    #   current_bias = tf.abs(tf.reduce_mean(end_points['branch_prob']) - 0.5)
+    #   tf.losses.compute_weighted_loss(tf.nn.relu(current_bias - 0.1), weights=10.0)
 
       return end_points
 
