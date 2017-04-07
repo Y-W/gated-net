@@ -301,10 +301,10 @@ def _get_variables_to_train():
   Returns:
     A list of variables to train by the optimizer.
   """
-  return tf.trainable_variables()
-#   return [v for v in tf.trainable_variables() if v.name.startswith('resnet_v1_50/left_branch') or
-#                                                  v.name.startswith('resnet_v1_50/right_branch') or
-#                                                  v.name.startswith('resnet_v1_50/branch_fn')]
+#   return tf.trainable_variables()
+  return [v for v in tf.trainable_variables() if v.name.startswith('resnet_v1_50/left_branch') or
+                                                 v.name.startswith('resnet_v1_50/right_branch') or
+                                                 v.name.startswith('resnet_v1_50/branch_fn')]
 
 def main(_):
   if not FLAGS.dataset_dir:
