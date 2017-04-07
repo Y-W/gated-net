@@ -202,13 +202,13 @@ def resnet_v1_hard_branch(inputs,
           branch = branch_prob - tf.stop_gradient(tf.random_uniform(tf.shape(branch_prob)))
           branch = tf.hard_gate(branch, name='branch_val')
         with tf.variable_scope('left_branch', [net], reuse=reuse):
-          with slim.arg_scope([slim.batch_norm], batch_weights=(1.0-branch)):
+          with slim.arg_scope([slim.batch_norm], batch_weights=(1.0-tf.squeeze(branch)):
             net_left = resnet_utils.stack_blocks_dense(net, blocks2)
             net_left = tf.reduce_mean(net_left, [1, 2], name='pool5', keep_dims=True)
             net_left = slim.conv2d(net_left, num_classes, [1, 1], activation_fn=None,
                               normalizer_fn=None, scope='logits')
         with tf.variable_scope('right_branch', [net], reuse=reuse):
-          with slim.arg_scope([slim.batch_norm], batch_weights=(branch)):
+          with slim.arg_scope([slim.batch_norm], batch_weights=(tf.squeeze(branch))):
             net_right = resnet_utils.stack_blocks_dense(net, blocks2)
             net_right = tf.reduce_mean(net_right, [1, 2], name='pool5', keep_dims=True)
             net_right = slim.conv2d(net_right, num_classes, [1, 1], activation_fn=None,
