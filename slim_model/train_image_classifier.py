@@ -149,10 +149,6 @@ tf.app.flags.DEFINE_string(
     'checkpoint_path', None,
     'The path to a checkpoint from which to fine-tune.')
 
-tf.app.flags.DEFINE_boolean(
-    'ignore_missing_vars', True,
-    'When restoring a checkpoint would ignore missing variables.')
-
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -267,14 +263,16 @@ def _get_init_fn():
     return None
 
   # TODO(sguada) variables.filter_variables()
-  variables_to_restore = {}
+  variables_to_restore1 = {}
+  variables_to_restore2 = {}
   for var in slim.get_model_variables():
-    excluded = False
-    if not excluded:
-      var_name = var.op.name
-    #   var_name = var_name.replace('/left_branch', '')
-      var_name = var_name.replace('/right_branch', '')
-      variables_to_restore[var_name] = var
+    var_name = var.op.name
+    if ('/branch_fn' not in var_name) and ('/right_branch' not in var_name):
+        var_name = var_name.replace('/left_branch', '')
+        variables_to_restore1[var_name] = var
+    elif '/right_branch' in var_name:
+        var_name = var_name.replace('/right_branch', '')
+        variables_to_restore2[var_name] = var
 
   if tf.gfile.IsDirectory(FLAGS.checkpoint_path):
     checkpoint_path = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
@@ -283,10 +281,18 @@ def _get_init_fn():
 
   tf.logging.info('Fine-tuning from %s' % checkpoint_path)
 
-  return slim.assign_from_checkpoint_fn(
-      checkpoint_path,
-      variables_to_restore,
-      ignore_missing_vars=FLAGS.ignore_missing_vars)
+  init_f1 = slim.assign_from_checkpoint_fn(
+                checkpoint_path,
+                variables_to_restore1)
+  init_f2 = slim.assign_from_checkpoint_fn(
+                checkpoint_path,
+                variables_to_restore2)
+
+  def _init_fn(sess):
+      init_f1(sess)
+      init_f2(sess)
+
+  return _init_fn
 
 
 def _get_variables_to_train():
