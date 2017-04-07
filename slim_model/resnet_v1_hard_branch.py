@@ -195,7 +195,8 @@ def resnet_v1_hard_branch(inputs,
         net = resnet_utils.stack_blocks_dense(net, blocks1)
 
         with tf.variable_scope('branch_fn', [net], reuse=reuse):
-          branch = tf.stop_gradient(net)
+          # branch = tf.stop_gradient(net)
+          branch = net
           branch = resnet_utils.stack_blocks_dense(branch, blocks_branch)
           branch = tf.reduce_mean(branch, [1, 2], name='pool_branch', keep_dims=True)
           branch_prob = slim.conv2d(branch, 1, [1, 1], activation_fn=tf.sigmoid, scope='branch_preact')
