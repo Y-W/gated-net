@@ -199,7 +199,10 @@ def resnet_v1_hard_branch(inputs,
           branch = resnet_utils.stack_blocks_dense(branch, blocks_branch)
           branch = tf.reduce_mean(branch, [1, 2], name='pool_branch', keep_dims=True)
           branch_prob = slim.conv2d(branch, 1, [1, 1], activation_fn=tf.sigmoid, scope='branch_preact')
-          branch = branch_prob - tf.stop_gradient(tf.random_uniform(tf.shape(branch_prob)))
+          if is_training:
+            branch = branch_prob - tf.stop_gradient(tf.random_uniform(tf.shape(branch_prob)))
+          else:
+            branch = branch_prob - 0.5
           branch = tf.hard_gate(branch, name='branch_val')
         with tf.variable_scope('left_branch', [net], reuse=reuse):
           with slim.arg_scope([slim.batch_norm], batch_weights=(1.0-tf.squeeze(branch))):
