@@ -377,7 +377,7 @@ def main(_):
       moving_accuracy = tf.train.ExponentialMovingAverage(decay=0.99)
       moving_accuracy_op = moving_accuracy.apply([accuracy, weight_one])
       tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, moving_accuracy_op)
-      with tf.control_dependencies(moving_accuracy_op):
+      with tf.control_dependencies([moving_accuracy_op]):
         end_points['moving_accuracy'] = moving_accuracy.average(accuracy) / moving_accuracy.average(weight_one)
       return end_points
 
