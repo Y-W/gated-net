@@ -373,10 +373,11 @@ def main(_):
     #   tf.losses.compute_weighted_loss(tf.nn.relu(current_bias - 0.1), weights=10.0)
       predictions = tf.argmax(tf.squeeze(logits), 1)
       accuracy = tf.reduce_mean(tf.to_float(tf.equal(predictions, tf.argmax(labels, axis=1))))
+      weight_one = tf.constant(1.0, tf.float32)
       moving_accuracy = tf.train.ExponentialMovingAverage(decay=0.99)
-      moving_accuracy_op = moving_accuracy.apply([accuracy])
+      moving_accuracy_op = moving_accuracy.apply([accuracy, weight_one])
       tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, moving_accuracy_op)
-      end_points['moving_accuracy'] = moving_accuracy.average(accuracy)
+      end_points['moving_accuracy'] = moving_accuracy.average(accuracy) / moving_accuracy.average(weight_one)
       return end_points
 
     # Gather initial summaries.
