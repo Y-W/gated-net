@@ -413,7 +413,10 @@ def main(_):
 
     #  and returns a train_tensor and summary_op
     pred_loss = tf.add_n(tf.get_collection(tf.GraphKeys.LOSSES), name='Pred_Loss')
-    reg_loss = tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='Reg_Loss')
+    if len(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)) > 0:
+        reg_loss = tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='Reg_Loss')
+    else:
+        reg_loss = 0.0
     total_loss = tf.add(pred_loss, reg_loss, name='total_loss')
     gradients = optimizer.compute_gradients(total_loss, var_list=variables_to_train)
     # Add total_loss to summary.
