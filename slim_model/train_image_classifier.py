@@ -50,7 +50,7 @@ tf.app.flags.DEFINE_float(
     'weight_decay', 0.0, 'The weight decay on the model weights.') # 0.00004
 
 tf.app.flags.DEFINE_string(
-    'optimizer', 'momentum',
+    'optimizer', 'rmsprop',
     'The name of the optimizer, one of "adadelta", "adagrad", "adam",'
     '"ftrl", "momentum", "sgd" or "rmsprop".')
 
