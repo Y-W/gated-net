@@ -114,6 +114,13 @@ def bottleneck(inputs, depth, depth_bottleneck, stride, rate=1,
                                             sc.original_name_scope,
                                             output)
 
+batch_norm_params = {
+      'decay': 0.997,
+      'epsilon': 1e-5,
+      'scale': True,
+      'updates_collections': tf.GraphKeys.UPDATE_OPS,
+}
+
 
 def resnet_v1_hard_branch(inputs,
               blocks1, blocks_branch, blocks2,
@@ -187,16 +194,6 @@ def resnet_v1_hard_branch(inputs,
         net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool1')
         net = resnet_utils.stack_blocks_dense(net, blocks1)
 
-        with tf.variable_scope('left_branch', [net], reuse=reuse):
-          net_left = resnet_utils.stack_blocks_dense(net, blocks2)
-          net_left = tf.reduce_mean(net_left, [1, 2], name='pool5', keep_dims=True)
-          net_left = slim.conv2d(net_left, num_classes, [1, 1], activation_fn=None,
-                            normalizer_fn=None, scope='logits')
-        with tf.variable_scope('right_branch', [net], reuse=reuse):
-          net_right = resnet_utils.stack_blocks_dense(net, blocks2)
-          net_right = tf.reduce_mean(net_right, [1, 2], name='pool5', keep_dims=True)
-          net_right = slim.conv2d(net_right, num_classes, [1, 1], activation_fn=None,
-                            normalizer_fn=None, scope='logits')
         with tf.variable_scope('branch_fn', [net], reuse=reuse):
           branch = tf.stop_gradient(net)
           branch = resnet_utils.stack_blocks_dense(branch, blocks_branch)
@@ -204,8 +201,20 @@ def resnet_v1_hard_branch(inputs,
           branch_prob = slim.conv2d(branch, 1, [1, 1], activation_fn=tf.sigmoid, scope='branch_preact')
           branch = branch_prob - tf.stop_gradient(tf.random_uniform(tf.shape(branch_prob)))
           branch = tf.hard_gate(branch, name='branch_val')
+        with tf.variable_scope('left_branch', [net], reuse=reuse):
+          with slim.arg_scope([slim.batch_norm], batch_weights=(1.0-branch)):
+            net_left = resnet_utils.stack_blocks_dense(net, blocks2)
+            net_left = tf.reduce_mean(net_left, [1, 2], name='pool5', keep_dims=True)
+            net_left = slim.conv2d(net_left, num_classes, [1, 1], activation_fn=None,
+                              normalizer_fn=None, scope='logits')
+        with tf.variable_scope('right_branch', [net], reuse=reuse):
+          with slim.arg_scope([slim.batch_norm], batch_weights=(branch)):
+            net_right = resnet_utils.stack_blocks_dense(net, blocks2)
+            net_right = tf.reduce_mean(net_right, [1, 2], name='pool5', keep_dims=True)
+            net_right = slim.conv2d(net_right, num_classes, [1, 1], activation_fn=None,
+                              normalizer_fn=None, scope='logits')
 
-        net = net_left # net_left * (1.0 - branch) + net_right * branch
+        net = net_left * (1.0 - branch) + net_right * branch
 
         # Convert end_points_collection into a dictionary of end_points.
         end_points = slim.utils.convert_collection_to_dict(end_points_collection)
