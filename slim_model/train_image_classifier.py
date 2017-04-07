@@ -372,7 +372,7 @@ def main(_):
     #   current_bias = tf.abs(tf.reduce_mean(end_points['branch_prob']) - 0.5)
     #   tf.losses.compute_weighted_loss(tf.nn.relu(current_bias - 0.1), weights=10.0)
       predictions = tf.argmax(tf.squeeze(logits), 1)
-      accuracy = tf.reduce_mean(tf.equal(predictions, tf.argmax(labels, axis=1)))
+      accuracy = tf.reduce_mean(tf.to_float(tf.equal(predictions, tf.argmax(labels, axis=1))))
       moving_accuracy = tf.train.ExponentialMovingAverage(decay=0.99)
       moving_accuracy_op = moving_accuracy.apply([accuracy])
       tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, moving_accuracy_op)
