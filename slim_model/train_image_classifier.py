@@ -434,7 +434,7 @@ def main(_):
 
     update_op = tf.group(*update_ops)
 
-    total_loss = tf.Print(total_loss, [net['moving_accuracy']], 'Moving_Accuracy')
+    # total_loss = tf.Print(total_loss, [net['moving_accuracy']], 'Moving_Accuracy')
 
     train_tensor = control_flow_ops.with_dependencies([update_op], total_loss,
                                                       name='train_op')
