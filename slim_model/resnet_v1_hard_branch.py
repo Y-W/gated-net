@@ -205,7 +205,7 @@ def resnet_v1_hard_branch(inputs,
           else:
             branch = branch_prob - 0.5
           branch = tf.hard_gate(branch, name='branch_val')
-          branch = tf.constant(0.0, tf.float32, shape=branch.shape)
+          branch = tf.constant(0.5, tf.float32, shape=branch.shape)
         with tf.variable_scope('left_branch', [net], reuse=reuse):
           with slim.arg_scope([slim.batch_norm], batch_weights=(1.0-tf.squeeze(branch))):
             net_left = resnet_utils.stack_blocks_dense(net, blocks2)

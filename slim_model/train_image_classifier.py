@@ -35,7 +35,7 @@ tf.app.flags.DEFINE_integer(
     'The frequency with which logs are print.')
 
 tf.app.flags.DEFINE_integer(
-    'save_summaries_secs', 300,
+    'save_summaries_secs', 10,
     'The frequency with which summaries are saved, in seconds.')
 
 tf.app.flags.DEFINE_integer(
@@ -374,7 +374,7 @@ def main(_):
       predictions = tf.argmax(tf.squeeze(logits), 1)
       accuracy = tf.reduce_mean(tf.to_float(tf.equal(predictions, tf.argmax(labels, axis=1))))
       weight_one = tf.constant(1.0, tf.float32)
-      moving_accuracy = tf.train.ExponentialMovingAverage(decay=0.99)
+      moving_accuracy = tf.train.ExponentialMovingAverage(decay=0.9)
       moving_accuracy_op = moving_accuracy.apply([accuracy, weight_one])
       tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, moving_accuracy_op)
       with tf.control_dependencies([moving_accuracy_op]):
@@ -389,19 +389,22 @@ def main(_):
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
     # Add summaries for end_points.
-    for end_point in net:
-      x = net[end_point]
-      summaries.add(tf.summary.histogram('activations/' + end_point, x))
+    # for end_point in net:
+    #   x = net[end_point]
+    #   summaries.add(tf.summary.histogram('activations/' + end_point, x))
     #   summaries.add(tf.summary.scalar('sparsity/' + end_point,
     #                                   tf.nn.zero_fraction(x)))
 
     # Add summaries for losses.
     for loss in tf.get_collection(tf.GraphKeys.LOSSES):
       summaries.add(tf.summary.scalar('losses/%s' % loss.op.name, loss))
+    for loss in tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES):
+      summaries.add(tf.summary.scalar('reg_losses/%s' % loss.op.name, loss))
+    summaries.add(tf.summary.scalar('training_acc_smoothed', net['moving_accuracy']))
 
     # Add summaries for variables.
-    for variable in slim.get_model_variables():
-      summaries.add(tf.summary.histogram(variable.op.name, variable))
+    # for variable in slim.get_model_variables():
+    #   summaries.add(tf.summary.histogram(variable.op.name, variable))
 
     #########################################
     # Configure the optimization procedure. #
@@ -422,7 +425,7 @@ def main(_):
     total_loss = tf.add(pred_loss, reg_loss, name='total_loss')
     gradients = optimizer.compute_gradients(total_loss, var_list=variables_to_train)
     # Add total_loss to summary.
-    summaries.add(tf.summary.scalar('total_loss', total_loss))
+    # summaries.add(tf.summary.scalar('total_loss', total_loss))
 
     # Create gradient updates.
     grad_updates = optimizer.apply_gradients(gradients,
