@@ -99,11 +99,11 @@ tf.app.flags.DEFINE_float('rmsprop_decay', 0.9, 'Decay term for RMSProp.')
 
 tf.app.flags.DEFINE_string(
     'learning_rate_decay_type',
-    'exponential',
+    'fixed', # 'exponential',
     'Specifies how the learning rate is decayed. One of "fixed", "exponential",'
     ' or "polynomial"')
 
-tf.app.flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate.')
+tf.app.flags.DEFINE_float('learning_rate', 0.0, 'Initial learning rate.') # 0.001
 
 tf.app.flags.DEFINE_float(
     'end_learning_rate', 0.0001,
@@ -327,7 +327,7 @@ def main(_):
     network_fn = resnet_v1_hard_branch.v1_fn(
         num_classes=(dataset.num_classes - FLAGS.labels_offset),
         weight_decay=FLAGS.weight_decay,
-        is_training=True)
+        is_training=False) # True
 
     ##############################################################
     # Create a dataset provider that loads data from the dataset #

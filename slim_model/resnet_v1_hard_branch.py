@@ -188,12 +188,12 @@ def resnet_v1_hard_branch(inputs,
     with slim.arg_scope([slim.conv2d, bottleneck,
                          resnet_utils.stack_blocks_dense],
                         outputs_collections=end_points_collection):
-      with slim.arg_scope([slim.batch_norm], is_training=is_training):
+      with slim.arg_scope([slim.batch_norm], is_training=False):
         net = inputs
         net = resnet_utils.conv2d_same(net, 64, 7, stride=2, scope='conv1')
         net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool1')
         net = resnet_utils.stack_blocks_dense(net, blocks1)
-
+      with slim.arg_scope([slim.batch_norm], is_training=is_training):
         with tf.variable_scope('branch_fn', [net], reuse=reuse):
           # branch = tf.stop_gradient(net)
           branch = net
@@ -205,7 +205,9 @@ def resnet_v1_hard_branch(inputs,
           else:
             branch = branch_prob - 0.5
           branch = tf.hard_gate(branch, name='branch_val')
-          branch = tf.constant(0.5, tf.float32, shape=branch.shape)
+          branch_size = branch.shape.dims[0].value
+          branch = tf.constant([0.0] * (branch_size // 2) + [1.0] * (branch_size - branch_size//2),
+                               tf.float32, shape=branch.shape)
         with tf.variable_scope('left_branch', [net], reuse=reuse):
           with slim.arg_scope([slim.batch_norm], batch_weights=(1.0-tf.squeeze(branch))):
             net_left = resnet_utils.stack_blocks_dense(net, blocks2)
