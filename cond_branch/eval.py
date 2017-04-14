@@ -16,7 +16,7 @@ BATCH_SIZE=200
 TRAIN_IMAGE_SIZE=224
 DISK_READER=4
 PREPROCESSOR=8
-NUM_BRANCHES=2
+NUM_BRANCHES=1
 
 tf.app.flags.DEFINE_string(
     'dataset_dir', None, 'The directory where the dataset files are stored.')
