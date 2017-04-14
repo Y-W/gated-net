@@ -99,7 +99,7 @@ def prepare_net(batch_queue):
     return train_tensor, summary_op
 
     
-def load_pretrain_model(sess):
+def load_pretrain_model():
     variable_restoring = []
     for var in slim.get_model_variables():
         var_name = var.op.name
@@ -118,8 +118,14 @@ def load_pretrain_model(sess):
             variable_restoring.append({var_name_new : var})
     tf.logging.info('Fine-tuning from %s' % FLAGS.pretrain_checkpoint)
 
-    for m in variable_restoring:
-        slim.assign_from_checkpoint_fn(FLAGS.pretrain_checkpoint, m)(sess)
+    init_fn = []
+    with tf.variable_scope('init_fn'):
+        for m in variable_restoring:
+            init_fn.append(slim.assign_from_checkpoint_fn(FLAGS.pretrain_checkpoint, m))
+    def _init_fn(sess):
+        for f in init_fn:
+            f(sess)
+    return _init_fn
         
 
 
@@ -135,7 +141,7 @@ def main(_):
         train_t,
         logdir=FLAGS.model_log_dir,
         log_every_n_steps=100,
-        init_fn=load_pretrain_model,
+        init_fn=load_pretrain_model(),
         summary_op=summary_t,
         save_summaries_secs=10,
         saver=tf.train.Saver(var_list=slim.get_model_variables(), max_to_keep=1000),
