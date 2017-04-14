@@ -33,6 +33,8 @@ FLAGS = tf.app.flags.FLAGS
 
 def prepare_dataset():
     with tf.variable_scope('training_data_provider'):
+        tf_global_step = slim.get_or_create_global_step()
+
         dataset = imagenet.get_split('validation', FLAGS.dataset_dir)
 
         provider = slim.dataset_data_provider.DatasetDataProvider(
