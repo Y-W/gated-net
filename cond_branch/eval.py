@@ -29,6 +29,7 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_string(
     'eval_dir', None, 'Directory where the results are saved to.')
 
+FLAGS = tf.app.flags.FLAGS
 
 def prepare_dataset():
     with tf.variable_scope('training_data_provider'):

@@ -33,6 +33,8 @@ tf.app.flags.DEFINE_string(
     'pretrain_checkpoint', None,
     'The path to a checkpoint from which to fine-tune.')
 
+FLAGS = tf.app.flags.FLAGS
+
 
 def prepare_dataset():
     with tf.variable_scope('training_data_provider'):
