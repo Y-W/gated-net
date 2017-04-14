@@ -96,7 +96,7 @@ def main(_):
         logdir=FLAGS.eval_dir,
         num_evals=num_batches,
         eval_op=tf.group(*names_to_updates.values()),
-        initial_op=tf.variables_initializer(slim.get_or_create_global_step()),
+        initial_op=tf.variables_initializer([slim.get_or_create_global_step()]),
         variables_to_restore=tf.model_variables())
     
 
