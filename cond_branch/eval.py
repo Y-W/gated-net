@@ -82,17 +82,22 @@ def main(_):
     tf.logging.set_verbosity(tf.logging.INFO)
 
     if tf.gfile.IsDirectory(FLAGS.checkpoint_path):
-      checkpoint_path = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
+        checkpoint_path = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
     else:
-      checkpoint_path = FLAGS.checkpoint_path
+        checkpoint_path = FLAGS.checkpoint_path
+    
+    print('here!')
 
     dataset, images, labels = prepare_dataset()
+    print('here!')
     names_to_updates = prepare_net(images, labels)
+    print('here!')
 
     num_batches = math.ceil(dataset.num_samples / float(BATCH_SIZE))
 
     for v in tf.model_variables():
         print(v.op.name)
+    print('here!')
 
     slim.evaluation.evaluate_once('',
         checkpoint_path=checkpoint_path,
