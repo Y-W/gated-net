@@ -12,7 +12,7 @@ import preprocess_inception
 slim = tf.contrib.slim
 
 BATCH_SIZE=128
-NUM_BRANCHES=2
+NUM_BRANCHES=3
 INITIAL_LEARNING_RATE=0.001
 DECAY_RATE=0.8
 INFLAT_RATE=1.1
