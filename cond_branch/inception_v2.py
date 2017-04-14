@@ -442,14 +442,14 @@ def inception_v2_gate_seg(inputs, end_points, branch_num):
     with tf.variable_scope(end_point):
       with tf.variable_scope('Branch_0'):
         branch_0 = slim.conv2d(
-            net, depth(128), [1, 1],
+            inputs, depth(128), [1, 1],
             weights_initializer=trunc_normal(0.09),
             scope='Conv2d_0a_1x1')
         branch_0 = slim.conv2d(branch_0, depth(160), [3, 3], stride=2,
                                 scope='Conv2d_1a_3x3')
       with tf.variable_scope('Branch_1'):
         branch_1 = slim.conv2d(
-            net, depth(64), [1, 1],
+            inputs, depth(64), [1, 1],
             weights_initializer=trunc_normal(0.09),
             scope='Conv2d_0a_1x1')
         branch_1 = slim.conv2d(
@@ -458,7 +458,7 @@ def inception_v2_gate_seg(inputs, end_points, branch_num):
             branch_1, depth(96), [3, 3], stride=2, scope='Conv2d_1a_3x3')
       with tf.variable_scope('Branch_2'):
         branch_2 = slim.max_pool2d(
-            net, [3, 3], stride=2, scope='MaxPool_1a_3x3')
+            inputs, [3, 3], stride=2, scope='MaxPool_1a_3x3')
       net = tf.concat(axis=3, values=[branch_0, branch_1, branch_2])
       end_points[end_point] = net
 
