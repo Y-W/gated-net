@@ -417,7 +417,7 @@ def stochastic_branch_fn(input_tensor, slope_tensor, is_training):
   batch_size, branch_num = input_tensor.shape.as_list()
   if is_training:
     probs_tensor = tf.nn.softmax(input_tensor * slope_tensor, dim=1, name='branch_prob')
-    with tf.get_default_graph().gradient_override_map({'Cumsum': 'Identity', 'HardGate': 'Identity', 'Mul': 'FirstGradOnly_GradFn'}):
+    with tf.get_default_graph().gradient_override_map({'Cumsum': 'FirstGradOnly_GradFn', 'HardGate': 'Identity', 'Mul': 'FirstGradOnly_GradFn'}):
       low_limit = tf.cumsum(probs_tensor, axis=1, exclusive=True, name='low_limit')
       high_limit = tf.cumsum(probs_tensor, axis=1, exclusive=False, name='high_limit')
       rand_number = tf.stop_gradient(tf.random_uniform((batch_size, 1)))
