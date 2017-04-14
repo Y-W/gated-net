@@ -91,6 +91,9 @@ def main(_):
 
     num_batches = math.ceil(dataset.num_samples / float(BATCH_SIZE))
 
+    for v in tf.model_variables():
+        print v.op.name
+
     slim.evaluation.evaluate_once('',
         checkpoint_path=checkpoint_path,
         logdir=FLAGS.eval_dir,
