@@ -58,13 +58,14 @@ def prepare_dataset():
             labels, dataset.num_classes)
         batch_queue = slim.prefetch_queue.prefetch_queue(
             [images, labels], capacity=3)
-    return batch_queue
+    return dataset, batch_queue
 
-def prepare_net(batch_queue):
+def prepare_net(batch_queue, num_samples):
     global_step = slim.create_global_step()
 
-    learning_rate = tf.train.exponential_decay(INITIAL_LEARNING_RATE, global_step, 2, DECAY_RATE, staircase=True, name='learning_rate')
-    slope_rate = tf.train.exponential_decay(1.0, global_step, 1, INFLAT_RATE, staircase=True, name='slope_rate')
+    batch_num = num_samples // BATCH_SIZE
+    learning_rate = tf.train.exponential_decay(INITIAL_LEARNING_RATE, global_step, 2 * batch_num, DECAY_RATE, staircase=True, name='learning_rate')
+    slope_rate = tf.train.exponential_decay(1.0, global_step, batch_num, INFLAT_RATE, staircase=True, name='slope_rate')
 
     images, labels = batch_queue.dequeue()
     logits, end_points = inception_v2.inception_v2(images, slope_rate, NUM_BRANCHES, is_training=True, reuse=False)
@@ -133,8 +134,8 @@ def main(_):
         raise ValueError('Specify all flags')
     tf.logging.set_verbosity(tf.logging.INFO)
 
-    batch_queue = prepare_dataset()
-    train_t, summary_t = prepare_net(batch_queue)
+    dataset, batch_queue = prepare_dataset()
+    train_t, summary_t = prepare_net(batch_queue, dataset.num_samples)
 
     slim.learning.train(
         train_t,
