@@ -11,7 +11,7 @@ import preprocess_inception
 
 slim = tf.contrib.slim
 
-BATCH_SIZE=32
+BATCH_SIZE=128
 NUM_BRANCHES=2
 INITIAL_LEARNING_RATE=0.001
 DECAY_RATE=0.8
@@ -19,7 +19,7 @@ INFLAT_RATE=1.1
 MOMENTUM_RATE=0.95
 
 DISK_READER=4
-PREPROCESSOR=16
+PREPROCESSOR=8
 TRAIN_IMAGE_SIZE=224
 
 tf.app.flags.DEFINE_string(
@@ -57,7 +57,7 @@ def prepare_dataset():
         labels = slim.one_hot_encoding(
             labels, dataset.num_classes)
         batch_queue = slim.prefetch_queue.prefetch_queue(
-            [images, labels], capacity=3)
+            [images, labels], capacity=10)
     return dataset, batch_queue
 
 def prepare_net(batch_queue, num_samples):
