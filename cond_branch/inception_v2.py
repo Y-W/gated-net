@@ -543,7 +543,7 @@ def inception_v2(inputs,
           end_points['branch_fn'] = tmp_end_points
           branch_val = stochastic_branch_fn(branch_val, slope_tensor, is_training)
           end_points['branch_result'] = branch_val
-          branch_decision_list = tf.unpack(branch_val, axis=1, name='branch_decisions')
+          branch_decision_list = tf.unstack(branch_val, axis=1, name='branch_decisions')
         branch_endpoints = []
         for i in xrange(num_branches):
           branch_name = 'CondBranch_%i' % i
@@ -553,7 +553,7 @@ def inception_v2(inputs,
               branch_output, tmp_end_points = inception_v2_branch_seg(net, tmp_end_points)
               end_points[branch_name] = tmp_end_points
               branch_endpoints.append(branch_output)
-        all_branch_output = tf.pack(branch_endpoints, axis=1, name='all_branch_output')
+        all_branch_output = tf.stack(branch_endpoints, axis=1, name='all_branch_output')
         end_points['all_branch_output'] = all_branch_output
         final_output = tf.reduce_sum(tf.multiply(all_branch_output, tf.expand_dims(branch_val, axis=2)), axis=1, name='final_output')
         end_points['final_output'] = final_output
