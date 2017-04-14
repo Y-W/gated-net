@@ -33,7 +33,6 @@ FLAGS = tf.app.flags.FLAGS
 
 def prepare_dataset():
     with tf.variable_scope('training_data_provider'):
-        tf_global_step = slim.get_or_create_global_step()
 
         dataset = imagenet.get_split('validation', FLAGS.dataset_dir)
 
@@ -57,6 +56,7 @@ def prepare_dataset():
 
 
 def prepare_net(images, labels):
+    tf_global_step = slim.get_or_create_global_step()
     logits, end_points = inception_v2.inception_v2(images, None, NUM_BRANCHES, is_training=False, reuse=False)
     pred = end_points['hard_prediction']
     labels = tf.squeeze(labels)
