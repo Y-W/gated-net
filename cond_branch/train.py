@@ -46,7 +46,6 @@ def prepare_dataset():
             common_queue_capacity=20 * BATCH_SIZE,
             common_queue_min=10 * BATCH_SIZE)
         [image, label] = provider.get(['image', 'label'])
-        label = label - 1
 
         image = preprocess_inception.preprocess_image(image, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE, is_training=True)
 
@@ -56,7 +55,7 @@ def prepare_dataset():
             num_threads=PREPROCESSOR,
             capacity=10 * BATCH_SIZE)
         labels = slim.one_hot_encoding(
-            labels, dataset.num_classes - 1)
+            labels, dataset.num_classes)
         batch_queue = slim.prefetch_queue.prefetch_queue(
             [images, labels], capacity=3)
     return batch_queue

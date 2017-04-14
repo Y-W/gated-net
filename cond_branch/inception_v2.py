@@ -13,7 +13,7 @@ from tensorflow.python.framework import ops
 
 slim = tf.contrib.slim
 
-NUM_CLASSES=1000
+NUM_CLASSES=1001
 
 WEIGHT_DECAY=0.00004
 BATCH_NORM_DECAY=0.997 # 0.9997
