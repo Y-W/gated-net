@@ -87,7 +87,7 @@ def prepare_net(batch_queue):
     tf.summary.scalar('slope_rate', slope_rate)
     summary_op = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES), name='summary_op')
     
-    update_op = tf.group(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
+    update_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS))
 
     optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM_RATE, name='Momentum')
     gradients = optimizer.compute_gradients(total_loss)
