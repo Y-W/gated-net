@@ -145,7 +145,7 @@ def main(_):
         init_fn=load_pretrain_model(),
         summary_op=summary_t,
         save_summaries_secs=10,
-        saver=tf.train.Saver(var_list=slim.get_model_variables(), max_to_keep=1000),
+        saver=tf.train.Saver(var_list=tf.model_variables() + [slim.get_or_create_global_step()], max_to_keep=100),
         save_interval_secs=1800)
     
 
