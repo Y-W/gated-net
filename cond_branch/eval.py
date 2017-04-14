@@ -42,7 +42,6 @@ def prepare_dataset():
             common_queue_capacity=20 * BATCH_SIZE,
             common_queue_min=10 * BATCH_SIZE)
         [image, label] = provider.get(['image', 'label'])
-        label = label - 1
 
         image = preprocess_inception.preprocess_image(image, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE, is_training=False)
 
@@ -75,7 +74,6 @@ def prepare_net(images, labels):
     return names_to_updates
 
 
-
 def main(_):
     if not FLAGS.dataset_dir or not FLAGS.checkpoint_path or not FLAGS.eval_dir:
         raise ValueError('Specify all flags')
@@ -86,18 +84,10 @@ def main(_):
     else:
         checkpoint_path = FLAGS.checkpoint_path
     
-    print('here!')
-
     dataset, images, labels = prepare_dataset()
-    print('here!')
     names_to_updates = prepare_net(images, labels)
-    print('here!')
 
     num_batches = math.ceil(dataset.num_samples / float(BATCH_SIZE))
-
-    for v in tf.model_variables():
-        print(v.op.name)
-    print('here!')
 
     slim.evaluation.evaluate_once('',
         checkpoint_path=checkpoint_path,
