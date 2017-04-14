@@ -56,7 +56,6 @@ def prepare_dataset():
 
 
 def prepare_net(images, labels):
-    tf_global_step = slim.get_or_create_global_step()
     logits, end_points = inception_v2.inception_v2(images, None, NUM_BRANCHES, is_training=False, reuse=False)
     pred = end_points['hard_prediction']
     labels = tf.squeeze(labels)
@@ -97,6 +96,7 @@ def main(_):
         logdir=FLAGS.eval_dir,
         num_evals=num_batches,
         eval_op=tf.group(*names_to_updates.values()),
+        initial_op=tf.variables_initializer(slim.get_or_create_global_step()),
         variables_to_restore=tf.model_variables())
     
 
