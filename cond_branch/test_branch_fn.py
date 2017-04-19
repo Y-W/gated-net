@@ -14,8 +14,8 @@ def main():
         randVec = tf.constant(np.random.random(size=s), dtype=tf.float32)
         loss1 = tf.reduce_sum(prob * randVec)
         loss2 = tf.reduce_sum(samp * randVec)
-        grad1 = tf.gradients(loss1, preact)
-        grad2 = tf.gradients(loss2, preact)
+        grad1 = tf.gradients(loss1, preact)[0]
+        grad2 = tf.gradients(loss2, preact)[0]
 
         tmp = np.zeros((32, 10))
         n = 10000
