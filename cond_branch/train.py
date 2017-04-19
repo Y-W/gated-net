@@ -69,7 +69,7 @@ def prepare_net(batch_queue, num_samples):
     slope_rate = tf.train.exponential_decay(1.0, global_step, batch_num, INFLAT_RATE, staircase=True, name='slope_rate')
 
     images, labels = batch_queue.dequeue()
-    logits, end_points = inception_v2.inception_v2(images, slope_rate, NUM_BRANCHES, is_training=True, reuse=False)
+    logits, end_points = inception_v2.inception_v2(images, slope_rate, NUM_BRANCHES, is_training=False, reuse=False)
 
     with tf.variable_scope('stats'):
         pred_loss = tf.losses.softmax_cross_entropy(labels, logits, scope='cross_entropy_loss')
