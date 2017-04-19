@@ -79,11 +79,16 @@ def prepare_net(batch_queue, num_samples):
         if len(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)) > 0:
             reg_loss = tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='reg_Loss')
         total_loss = tf.add(pred_loss, reg_loss, name='total_loss')
-    tf.summary.scalar('pred_loss', pred_loss)
-    tf.summary.scalar('reg_loss', reg_loss)
-    tf.summary.scalar('total_loss', total_loss)
-    tf.summary.scalar('hard_acc', hard_accuracy)
-    tf.summary.scalar('soft_acc', soft_accuracy)
+    
+    moving_stats = tf.train.ExponentialMovingAverage(decay=0.98)
+    moving_stats_op = moving_stats.apply([pred_loss, reg_loss, total_loss, hard_accuracy, soft_accuracy])
+    tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, moving_stats_op)
+
+    tf.summary.scalar('pred_loss', moving_stats.average(pred_loss))
+    tf.summary.scalar('reg_loss', moving_stats.average(reg_loss))
+    tf.summary.scalar('total_loss', moving_stats.average(total_loss))
+    tf.summary.scalar('hard_acc', moving_stats.average(hard_accuracy))
+    tf.summary.scalar('soft_acc', moving_stats.average(soft_accuracy))
     tf.summary.scalar('learning_rate', learning_rate)
     tf.summary.scalar('slope_rate', slope_rate)
     tf.summary.histogram('branch_preact', end_points['branch_preact'])
