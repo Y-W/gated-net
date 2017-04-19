@@ -13,7 +13,7 @@ slim = tf.contrib.slim
 
 BATCH_SIZE=128
 NUM_BRANCHES=2
-INITIAL_LEARNING_RATE=0.0 # 1e-4
+INITIAL_LEARNING_RATE=1e-3 # 1e-4
 DECAY_RATE=0.8
 INFLAT_RATE=1.1
 MOMENTUM_RATE=0.9
@@ -69,7 +69,7 @@ def prepare_net(batch_queue, num_samples):
     slope_rate = tf.train.exponential_decay(1.0, global_step, batch_num, INFLAT_RATE, staircase=True, name='slope_rate')
 
     images, labels = batch_queue.dequeue()
-    logits, end_points = inception_v2.inception_v2(images, slope_rate, NUM_BRANCHES, is_training=False, reuse=False) # Change_back: is_training=True
+    logits, end_points = inception_v2.inception_v2(images, slope_rate, NUM_BRANCHES, is_training=True, reuse=False)
 
     with tf.variable_scope('stats'):
         pred_loss = tf.losses.softmax_cross_entropy(labels, logits, scope='cross_entropy_loss')
