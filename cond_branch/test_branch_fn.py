@@ -5,7 +5,7 @@ import numpy as np
 
 def main():
     with tf.Session() as sess:
-        s = [32, 1]
+        s = [32, 100]
         preact = tf.constant(np.random.random(size=s), dtype=tf.float32)
         slope = tf.constant(1.0, dtype=tf.float32)
         prob = tf.nn.softmax(preact * slope, dim=1)
