@@ -5,12 +5,13 @@ import numpy as np
 
 def main():
     with tf.Session() as sess:
-        preact = tf.constant(np.random.random(size=[32, 10]), dtype=tf.float32)
+        s = [32, 10]
+        preact = tf.constant(np.random.random(size=s), dtype=tf.float32)
         slope = tf.constant(1.0, dtype=tf.float32)
         prob = tf.nn.softmax(preact * slope, dim=1)
         samp = stochastic_branch_fn(preact, slope, True)
         
-        randVec = tf.constant(np.random.random(size=[64, 10]), dtype=tf.float32)
+        randVec = tf.constant(np.random.random(size=s), dtype=tf.float32)
         loss1 = tf.reduce_sum(prob * randVec)
         loss2 = tf.reduce_sum(samp * randVec)
         grad1 = tf.gradients(loss1, preact)
