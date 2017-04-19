@@ -5,7 +5,7 @@ import numpy as np
 
 def main():
     with tf.Session() as sess:
-        s = [32, 10]
+        s = [32, 1]
         preact = tf.constant(np.random.random(size=s), dtype=tf.float32)
         slope = tf.constant(1.0, dtype=tf.float32)
         prob = tf.nn.softmax(preact * slope, dim=1)
@@ -17,7 +17,7 @@ def main():
         grad1 = tf.gradients(loss1, preact)[0]
         grad2 = tf.gradients(loss2, preact)[0]
 
-        tmp = np.zeros((32, 10))
+        tmp = np.zeros(s)
         tmp2 = 0.0
         n = 100000
         for _ in xrange(n):
