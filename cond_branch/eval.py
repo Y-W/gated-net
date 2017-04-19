@@ -32,24 +32,25 @@ tf.app.flags.DEFINE_string(
 FLAGS = tf.app.flags.FLAGS
 
 def prepare_dataset():
-    with tf.variable_scope('training_data_provider'):
+    with tf.device('/cpu:0'):
+        with tf.variable_scope('evaluation_data_provider'):
 
-        dataset = imagenet.get_split('validation', FLAGS.dataset_dir)
+            dataset = imagenet.get_split('validation', FLAGS.dataset_dir)
 
-        provider = slim.dataset_data_provider.DatasetDataProvider(
-            dataset, shuffle=False,
-            num_readers=DISK_READER,
-            common_queue_capacity=20 * BATCH_SIZE,
-            common_queue_min=10 * BATCH_SIZE)
-        [image, label] = provider.get(['image', 'label'])
+            provider = slim.dataset_data_provider.DatasetDataProvider(
+                dataset, shuffle=False,
+                num_readers=DISK_READER,
+                common_queue_capacity=20 * BATCH_SIZE,
+                common_queue_min=10 * BATCH_SIZE)
+            [image, label] = provider.get(['image', 'label'])
 
-        image = preprocess_inception.preprocess_image(image, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE, is_training=False)
+            image = preprocess_inception.preprocess_image(image, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE, is_training=False)
 
-        images, labels = tf.train.batch(
-            [image, label],
-            batch_size=BATCH_SIZE,
-            num_threads=PREPROCESSOR,
-            capacity=10 * BATCH_SIZE)
+            images, labels = tf.train.batch(
+                [image, label],
+                batch_size=BATCH_SIZE,
+                num_threads=PREPROCESSOR,
+                capacity=10 * BATCH_SIZE)
 
     return dataset, images, labels
 

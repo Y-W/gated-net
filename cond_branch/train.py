@@ -37,27 +37,28 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def prepare_dataset():
-    with tf.variable_scope('training_data_provider'):
-        dataset = imagenet.get_split('train', FLAGS.dataset_dir)
+    with tf.device('/cpu:0'):
+        with tf.variable_scope('training_data_provider'):
+            dataset = imagenet.get_split('train', FLAGS.dataset_dir)
 
-        provider = slim.dataset_data_provider.DatasetDataProvider(
-            dataset,
-            num_readers=DISK_READER,
-            common_queue_capacity=20 * BATCH_SIZE,
-            common_queue_min=10 * BATCH_SIZE)
-        [image, label] = provider.get(['image', 'label'])
+            provider = slim.dataset_data_provider.DatasetDataProvider(
+                dataset,
+                num_readers=DISK_READER,
+                common_queue_capacity=20 * BATCH_SIZE,
+                common_queue_min=10 * BATCH_SIZE)
+            [image, label] = provider.get(['image', 'label'])
 
-        image = preprocess_inception.preprocess_image(image, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE, is_training=True)
+            image = preprocess_inception.preprocess_image(image, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE, is_training=True)
 
-        images, labels = tf.train.batch(
-            [image, label],
-            batch_size=BATCH_SIZE,
-            num_threads=PREPROCESSOR,
-            capacity=10 * BATCH_SIZE)
-        labels = slim.one_hot_encoding(
-            labels, dataset.num_classes)
-        batch_queue = slim.prefetch_queue.prefetch_queue(
-            [images, labels], capacity=10)
+            images, labels = tf.train.batch(
+                [image, label],
+                batch_size=BATCH_SIZE,
+                num_threads=PREPROCESSOR,
+                capacity=10 * BATCH_SIZE)
+            labels = slim.one_hot_encoding(
+                labels, dataset.num_classes)
+            batch_queue = slim.prefetch_queue.prefetch_queue(
+                [images, labels], capacity=10)
     return dataset, batch_queue
 
 def prepare_net(batch_queue, num_samples):
