@@ -18,12 +18,14 @@ def main():
         grad2 = tf.gradients(loss2, preact)[0]
 
         tmp = np.zeros((32, 10))
-        n = 10000
+        tmp2 = 0.0
+        n = 100000
         for _ in xrange(n):
             prob_, samp_, grad1_, grad2_ = sess.run([prob, samp, grad1, grad2])
-            print np.max(np.abs(grad1_ - grad2_))
+            tmp2 = max(tmp2, np.max(np.abs(grad1_ - grad2_)))
             tmp += samp_ - prob_
         tmp /= n
+        print tmp2
         print np.max(np.abs(tmp))
 
 if __name__ == '__main__':
