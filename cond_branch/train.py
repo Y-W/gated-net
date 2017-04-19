@@ -146,7 +146,8 @@ def main(_):
         summary_op=summary_t,
         save_summaries_secs=60,
         saver=tf.train.Saver(var_list=tf.model_variables() + [slim.get_or_create_global_step()], max_to_keep=100),
-        save_interval_secs=1800)
+        save_interval_secs=1800,
+        session_config=tf.ConfigProto(log_device_placement=True))
     
 
 if __name__ == '__main__':
