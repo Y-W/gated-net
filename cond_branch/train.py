@@ -13,13 +13,13 @@ slim = tf.contrib.slim
 
 BATCH_SIZE=128
 NUM_BRANCHES=2
-INITIAL_LEARNING_RATE=0.001
+INITIAL_LEARNING_RATE=1e-4
 DECAY_RATE=0.8
 INFLAT_RATE=1.1
-MOMENTUM_RATE=0.95
+MOMENTUM_RATE=0.9
 
 DISK_READER=4
-PREPROCESSOR=8
+PREPROCESSOR=4
 TRAIN_IMAGE_SIZE=224
 
 tf.app.flags.DEFINE_string(
@@ -92,8 +92,8 @@ def prepare_net(batch_queue, num_samples):
 
     optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM_RATE, name='Momentum')
     gradients = optimizer.compute_gradients(total_loss)
-    with tf.variable_scope('gradient_clipping'):
-        gradients = [(tf.clip_by_value(grad, -1.0, 1.0), var) for grad, var in gradients]
+    # with tf.variable_scope('gradient_clipping'):
+    #     gradients = [(tf.clip_by_value(grad, -1.0, 1.0), var) for grad, var in gradients]
     grad_update_op = optimizer.apply_gradients(gradients, global_step=global_step)
 
     train_tensor = control_flow_ops.with_dependencies([update_op, grad_update_op], total_loss)
@@ -146,9 +146,8 @@ def main(_):
         init_fn=load_pretrain_model(),
         summary_op=summary_t,
         save_summaries_secs=60,
-        saver=tf.train.Saver(var_list=tf.model_variables() + [slim.get_or_create_global_step()], max_to_keep=100),
-        save_interval_secs=1800,
-        session_config=tf.ConfigProto(log_device_placement=True))
+        saver=tf.train.Saver(var_list=tf.model_variables() + [slim.get_or_create_global_step()], max_to_keep=20),
+        save_interval_secs=1800)
     
 
 if __name__ == '__main__':
