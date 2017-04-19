@@ -541,6 +541,7 @@ def inception_v2(inputs,
           tmp_end_points = {}
           branch_val, tmp_end_points = inception_v2_gate_seg(net, tmp_end_points, num_branches)
           end_points['branch_fn'] = tmp_end_points
+          end_points['branch_preact'] = branch_val
           branch_val = stochastic_branch_fn(branch_val, slope_tensor, is_training)
           end_points['branch_result'] = branch_val
           branch_decision_list = tf.unstack(branch_val, axis=1, name='branch_decisions')
@@ -557,7 +558,8 @@ def inception_v2(inputs,
         end_points['all_branch_output'] = all_branch_output
         final_output = tf.reduce_sum(tf.multiply(all_branch_output, tf.expand_dims(branch_val, axis=2)), axis=1, name='final_output')
         end_points['final_output'] = final_output
-        end_points['soft_prediction'] = tf.nn.softmax(final_output, dim=1, name='soft_prediction')
+        end_points['soft_prediction'] = tf.reduce_sum(tf.multiply(tf.nn.softmax(all_branch_output, dim=2), 
+            tf.expand_dims(tf.nn.softmax(end_points['branch_preact'], dim=1), axis=2)), axis=1, name='soft_prediction')
         end_points['hard_prediction'] = tf.argmax(final_output, axis=1, name='hard_prediction')
         return final_output, end_points
 
