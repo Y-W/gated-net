@@ -66,11 +66,11 @@ def prepare_net(batch_queue, num_samples):
     learning_rate = tf.train.exponential_decay(INITIAL_LEARNING_RATE, global_step, DECAY_STEP * batch_num, DECAY_RATE, staircase=True, name='learning_rate')
     slope_rate = tf.train.exponential_decay(1.0, global_step, INFLAT_STEP * batch_num, INFLAT_RATE, staircase=True, name='slope_rate')
 
-    # images, labels = batch_queue.dequeue()
-    import numpy as np
-    images = tf.constant(np.random.random(size=(BATCH_SIZE, 32, 32, 3)), dtype=tf.float32)
-    labels = tf.constant(np.eye(10)[np.random.randint(10, size=(BATCH_SIZE))], dtype=tf.float32)
-    
+    images, labels = batch_queue.dequeue()
+    # import numpy as np
+    # images = tf.constant(np.random.random(size=(BATCH_SIZE, 32, 32, 3)), dtype=tf.float32)
+    # labels = tf.constant(np.eye(10)[np.random.randint(10, size=(BATCH_SIZE))], dtype=tf.float32)
+
     logits, end_points = resnet_v2_cifar10.resnet_v2_cifar_no_branch(images, slope_rate, NUM_BRANCHES, is_training=True)
 
     with tf.variable_scope('stats'):

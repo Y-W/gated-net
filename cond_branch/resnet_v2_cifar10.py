@@ -110,9 +110,8 @@ def bottleneck(inputs, increase_dim, scope, output_collection):
       stride = 1
     
     if increase_dim:
-      shortcut = slim.conv2d(inputs, depth_out, [1, 1], stride=2,
-                             normalizer_fn=None, activation_fn=None,
-                             scope='shortcut')
+      shortcut = tf.nn.avg_pool(inputs, [1, 1, 1, 1], [1, 2, 2, 1], 'SAME')
+      shortcut = tf.pad(shortcut, [[0, 0], [0, 0], [0, 0], [0, depth_in]])
     else:
       shortcut = inputs
     
