@@ -11,7 +11,7 @@ slim = tf.contrib.slim
 
 NUM_CLASSES=10
 
-NET_SIZE_N=5
+NET_SIZE_N=3
 
 WEIGHT_DECAY=0.0001
 BATCH_NORM_DECAY=0.9
@@ -101,7 +101,7 @@ def resnet_arg_scope():
 def bottleneck(inputs, increase_dim, scope, output_collection):
   with tf.variable_scope(scope, 'bottleneck_v2', [inputs]) as sc:
     depth_in = slim.utils.last_dimension(inputs.get_shape(), min_rank=4)
-    preact = slim.batch_norm(inputs, activation_fn=tf.nn.relu, scope='preact')
+    # preact = slim.batch_norm(inputs, activation_fn=tf.nn.relu, scope='preact')
     if increase_dim:
       depth_out = depth_in * 2
       stride = 2
@@ -110,16 +110,15 @@ def bottleneck(inputs, increase_dim, scope, output_collection):
       stride = 1
     
     if increase_dim:
-      shortcut = slim.conv2d(preact, depth_out, [1, 1], stride=2,
+      shortcut = slim.conv2d(inputs, depth_out, [1, 1], stride=2,
                              normalizer_fn=None, activation_fn=None,
                              scope='shortcut')
     else:
       shortcut = inputs
     
-    residual = conv2d_same(preact, depth_out, 3, stride, scope='conv1')
+    residual = conv2d_same(inputs, depth_out, 3, stride, scope='conv1')
     residual = slim.conv2d(residual, depth_out, [3, 3], stride=1,
-                           normalizer_fn=None, activation_fn=None,
-                           padding='SAME', scope='conv2')
+                           activation_fn=None, padding='SAME', scope='conv2')
 
     output = shortcut + residual
     output_collection[sc.name] = output
@@ -179,7 +178,7 @@ def resnet_v2_cifar(inputs,
                  slope_tensor,
                  num_branches,
                  is_training=True,
-                 reuse=True,
+                 reuse=False,
                  scope='ResNetV2'):
 
   # Final pooling and prediction
@@ -226,7 +225,7 @@ def resnet_v2_cifar_no_branch(inputs,
                  slope_tensor,
                  num_branches,
                  is_training=True,
-                 reuse=True,
+                 reuse=False,
                  scope='ResNetV2'):
 
   # Final pooling and prediction
@@ -241,5 +240,5 @@ def resnet_v2_cifar_no_branch(inputs,
       final_output = net
       end_points['final_output'] = final_output
       end_points['hard_prediction'] = tf.argmax(final_output, axis=1, name='hard_prediction')
-      end_points['soft_prediction'] = final_output
+      end_points['soft_prediction'] = tf.nn.softmax(final_output)
       return final_output, end_points
