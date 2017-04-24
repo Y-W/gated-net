@@ -13,7 +13,7 @@ slim = tf.contrib.slim
 
 BATCH_SIZE=128
 NUM_BRANCHES=1
-INITIAL_LEARNING_RATE=1e-2
+INITIAL_LEARNING_RATE=1e-1
 DECAY_RATE=0.1
 DECAY_STEP=30
 INFLAT_RATE=1.1
@@ -149,9 +149,9 @@ def main(_):
         log_every_n_steps=100,
         # init_fn=load_pretrain_model(),
         summary_op=summary_t,
-        save_summaries_secs=60,
+        save_summaries_secs=20,
         saver=tf.train.Saver(var_list=tf.model_variables() + [slim.get_or_create_global_step()], max_to_keep=20),
-        save_interval_secs=20)
+        save_interval_secs=600)
     
 
 if __name__ == '__main__':
