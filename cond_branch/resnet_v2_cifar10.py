@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import collections
 import tensorflow as tf
+from tensorflow.python.framework import ops
 
 slim = tf.contrib.slim
 
