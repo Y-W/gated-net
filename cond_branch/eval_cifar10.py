@@ -35,7 +35,7 @@ def prepare_dataset():
     with tf.device('/cpu:0'):
         with tf.variable_scope('evaluation_data_provider'):
 
-            dataset = cifar10.get_split('validation', FLAGS.dataset_dir)
+            dataset = cifar10.get_split('test', FLAGS.dataset_dir)
 
             provider = slim.dataset_data_provider.DatasetDataProvider(
                 dataset, shuffle=False,
