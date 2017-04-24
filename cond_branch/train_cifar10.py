@@ -12,7 +12,7 @@ import resnet_v2_cifar10
 slim = tf.contrib.slim
 
 BATCH_SIZE=128
-NUM_BRANCHES=2
+NUM_BRANCHES=4
 INITIAL_LEARNING_RATE=1e-1
 DECAY_RATE=0.1
 DECAY_STEP=80
