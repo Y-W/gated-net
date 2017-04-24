@@ -14,7 +14,7 @@ NUM_CLASSES=10
 NET_SIZE_N=3
 
 WEIGHT_DECAY=0.0001
-BATCH_NORM_DECAY=0.9
+BATCH_NORM_DECAY=0.99
 BATCH_NORM_EPSILON=1e-3
 
 TRAIN_COMMON_SEG=True
@@ -235,7 +235,7 @@ def resnet_v2_cifar_no_branch(inputs,
       net = inputs
       with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=(is_training)):
         net = resnet_v2_cifar10_root_block(net, end_points)
-        net = resnet_v2_cifar10_stack_blocks(net, end_points, [NET_SIZE_N, NET_SIZE_N, NET_SIZE_N], exempt_first=True)
+        # net = resnet_v2_cifar10_stack_blocks(net, end_points, [NET_SIZE_N, NET_SIZE_N, NET_SIZE_N], exempt_first=True)
         net = resnet_v2_cifar10_ending_block(net, end_points, NUM_CLASSES)
       final_output = net
       end_points['final_output'] = final_output
