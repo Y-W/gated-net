@@ -138,11 +138,16 @@ def resnet_v2_cifar10_ending_block(inputs, end_points, num_classes):
   end_points['ending_block'] = net
   return net
 
-def resnet_v2_cifar10_stack_blocks(inputs, end_points, schema):
+def resnet_v2_cifar10_stack_blocks(inputs, end_points, schema, exempt_first=False):
+  is_first = True
   net = inputs
   for c, i in enumerate(schema):
     with tf.variable_scope('stage_%i' % c, None, [net]):
-      net = bottleneck(net, True, 'block_0', end_points)
+      if is_first and exempt_first:
+        is_first = False
+        net = bottleneck(net, False, 'block_0', end_points)
+      else:
+        net = bottleneck(net, True, 'block_0', end_points)
       for j in xrange(1, i):
         net = bottleneck(net, False, 'block_%i' % j, end_points)
   return net
