@@ -56,7 +56,7 @@ def prepare_dataset():
 
 
 def prepare_net(images, labels):
-    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, None, NUM_BRANCHES, is_training=False, reuse=False)
+    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar_no_branch(images, None, NUM_BRANCHES, is_training=False, reuse=False)
     pred = end_points['hard_prediction']
     labels = tf.squeeze(labels)
 
