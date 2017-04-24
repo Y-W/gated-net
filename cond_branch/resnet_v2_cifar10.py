@@ -134,6 +134,7 @@ def resnet_v2_cifar10_root_block(inputs, end_points, trainable=TRAIN_COMMON_SEG)
 def resnet_v2_cifar10_ending_block(inputs, end_points, num_classes):
   net = tf.reduce_mean(inputs, [1, 2], name='GlobalPool', keep_dims=True)
   net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None, normalizer_fn=None, scope='logits')
+  net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
   end_points['ending_block'] = net
   return net
 
