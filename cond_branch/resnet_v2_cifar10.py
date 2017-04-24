@@ -238,7 +238,6 @@ def resnet_v2_cifar_no_branch(inputs,
         net = resnet_v2_cifar10_root_block(net, end_points)
         net = resnet_v2_cifar10_stack_blocks(net, end_points, [NET_SIZE_N, NET_SIZE_N, NET_SIZE_N], exempt_first=True)
         net = resnet_v2_cifar10_ending_block(net, end_points, NUM_CLASSES)
-        end_points['common_seg'] = tmp_end_points
       final_output = net
       end_points['final_output'] = final_output
       end_points['hard_prediction'] = tf.argmax(final_output, axis=1, name='hard_prediction')
