@@ -12,12 +12,12 @@ import resnet_v2_cifar10
 slim = tf.contrib.slim
 
 BATCH_SIZE=128
-NUM_BRANCHES=1
+NUM_BRANCHES=2
 INITIAL_LEARNING_RATE=1e-1
 DECAY_RATE=0.1
 DECAY_STEP=80
-INFLAT_RATE=1.1
-INFLAT_STEP=10
+INFLAT_RATE=2
+INFLAT_STEP=40
 MOMENTUM_RATE=0.9
 
 DISK_READER=2
@@ -71,7 +71,7 @@ def prepare_net(batch_queue, num_samples):
     # images = tf.constant(np.random.random(size=(BATCH_SIZE, 32, 32, 3)), dtype=tf.float32)
     # labels = tf.constant(np.eye(10)[np.random.randint(10, size=(BATCH_SIZE))], dtype=tf.float32)
 
-    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar_no_branch(images, slope_rate, NUM_BRANCHES, is_training=True)
+    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, slope_rate, NUM_BRANCHES, is_training=True)
 
     with tf.variable_scope('stats'):
         pred_loss = tf.losses.softmax_cross_entropy(labels, logits, scope='cross_entropy_loss')
