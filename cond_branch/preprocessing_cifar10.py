@@ -62,10 +62,10 @@ def preprocess_for_train(image,
 
   # Because these operations are not commutative, consider randomizing
   # the order their operation.
-  distorted_image = tf.image.random_brightness(distorted_image,
-                                               max_delta=63)
-  distorted_image = tf.image.random_contrast(distorted_image,
-                                             lower=0.2, upper=1.8)
+  # distorted_image = tf.image.random_brightness(distorted_image,
+  #                                              max_delta=63)
+  # distorted_image = tf.image.random_contrast(distorted_image,
+  #                                            lower=0.2, upper=1.8)
   # Subtract off the mean and divide by the variance of the pixels.
   return tf.image.per_image_standardization(distorted_image)
 
