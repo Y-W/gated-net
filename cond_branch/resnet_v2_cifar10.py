@@ -143,7 +143,7 @@ def resnet_v2_cifar10_stack_blocks(inputs, end_points, schema):
     with tf.variable_scope('stage_%i' % i, None, [net]):
       net = bottleneck(net, True, 'block_0', end_points)
       for j in xrange(1, i):
-        net = bottleneck(net, False, 'block_%i' % i, end_points)
+        net = bottleneck(net, False, 'block_%i' % j, end_points)
   return net
 
 
