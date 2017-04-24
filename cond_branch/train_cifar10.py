@@ -136,7 +136,7 @@ def prepare_net(batch_queue, num_samples):
 
 
 def main(_):
-    if not FLAGS.dataset_dir or not FLAGS.model_log_dir or not FLAGS.pretrain_checkpoint:
+    if not FLAGS.dataset_dir or not FLAGS.model_log_dir:
         raise ValueError('Specify all flags')
     tf.logging.set_verbosity(tf.logging.INFO)
 
