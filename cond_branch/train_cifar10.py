@@ -96,8 +96,8 @@ def prepare_net(batch_queue, num_samples):
 
     optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM_RATE, name='Momentum')
     gradients = optimizer.compute_gradients(total_loss)
-    with tf.variable_scope('gradient_clipping'):
-        gradients = [(tf.clip_by_value(grad, -2.0, 2.0), var) for grad, var in gradients]
+    # with tf.variable_scope('gradient_clipping'):
+    #     gradients = [(tf.clip_by_value(grad, -2.0, 2.0), var) for grad, var in gradients]
     grad_update_op = optimizer.apply_gradients(gradients, global_step=global_step)
 
     train_tensor = control_flow_ops.with_dependencies([update_op, grad_update_op], total_loss)
