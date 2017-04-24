@@ -146,7 +146,7 @@ def main(_):
     slim.learning.train(
         train_t,
         logdir=FLAGS.model_log_dir,
-        log_every_n_steps=1000,
+        log_every_n_steps=100,
         # init_fn=load_pretrain_model(),
         summary_op=summary_t,
         save_summaries_secs=60,
