@@ -13,9 +13,9 @@ slim = tf.contrib.slim
 
 BATCH_SIZE=128
 NUM_BRANCHES=2
-INITIAL_LEARNING_RATE=1e-3
+INITIAL_LEARNING_RATE=1e-1
 DECAY_RATE=0.1
-DECAY_STEP=30
+DECAY_STEP=40
 INFLAT_RATE=1.1
 INFLAT_STEP=10
 MOMENTUM_RATE=0.9
@@ -67,7 +67,7 @@ def prepare_net(batch_queue, num_samples):
     slope_rate = tf.train.exponential_decay(1.0, global_step, INFLAT_STEP * batch_num, INFLAT_RATE, staircase=True, name='slope_rate')
 
     images, labels = batch_queue.dequeue()
-    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, slope_rate, NUM_BRANCHES, is_training=True, reuse=False)
+    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar_no_branch(images, slope_rate, NUM_BRANCHES, is_training=True, reuse=False)
 
     with tf.variable_scope('stats'):
         pred_loss = tf.losses.softmax_cross_entropy(labels, logits, scope='cross_entropy_loss')

@@ -14,7 +14,7 @@ NUM_CLASSES=10
 NET_SIZE_N=5
 
 WEIGHT_DECAY=0.0001
-BATCH_NORM_DECAY=0.99
+BATCH_NORM_DECAY=0.9
 BATCH_NORM_EPSILON=1e-5
 
 TRAIN_COMMON_SEG=True
@@ -190,7 +190,7 @@ def resnet_v2_cifar(inputs,
       with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=(is_training and TRAIN_COMMON_SEG)):
         tmp_end_points = {}
         net = resnet_v2_cifar10_root_block(net, tmp_end_points)
-        net = resnet_v2_cifar10_stack_blocks(net, tmp_end_points, [NET_SIZE_N])
+        net = resnet_v2_cifar10_stack_blocks(net, tmp_end_points, [NET_SIZE_N], exempt_first=True)
         end_points['common_seg'] = tmp_end_points
       with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=is_training):
         with tf.variable_scope('CondBranchFn', values=[net]):
@@ -220,3 +220,26 @@ def resnet_v2_cifar(inputs,
             tf.expand_dims(tf.nn.softmax(end_points['branch_preact'], dim=1), axis=2)), axis=1, name='soft_prediction')
         end_points['hard_prediction'] = tf.argmax(final_output, axis=1, name='hard_prediction')
         return final_output, end_points
+
+
+def resnet_v2_cifar_no_branch(inputs,
+                 slope_tensor,
+                 num_branches,
+                 is_training=True,
+                 reuse=True,
+                 scope='ResNetV2'):
+
+  # Final pooling and prediction
+  with tf.variable_scope(scope, 'ResNetV2', [inputs], reuse=reuse) as scope:
+    with slim.arg_scope(resnet_arg_scope()):
+      end_points = {}
+      net = inputs
+      with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=(is_training and TRAIN_COMMON_SEG)):
+        net = resnet_v2_cifar10_root_block(net, end_points)
+        net = resnet_v2_cifar10_stack_blocks(net, end_points, [NET_SIZE_N, NET_SIZE_N, NET_SIZE_N], exempt_first=True)
+        net = resnet_v2_cifar10_ending_block(net, end_points, NUM_CLASSES)
+        end_points['common_seg'] = tmp_end_points
+      final_output = net
+      end_points['final_output'] = final_output
+      end_points['hard_prediction'] = tf.argmax(final_output, axis=1, name='hard_prediction')
+      return final_output, end_points
