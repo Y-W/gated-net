@@ -126,8 +126,8 @@ def bottleneck(inputs, increase_dim, scope, output_collection):
   return output
 
 
-def resnet_v2_cifar10_root_block(inputs, end_points, trainable=TRAIN_COMMON_SEG):
-  net = slim.conv2d(inputs, 16, [3, 3], stride=1, padding='SAME', scope='root_block', trainable=trainable)
+def resnet_v2_cifar10_root_block(inputs, end_points):
+  net = slim.conv2d(inputs, 16, [3, 3], stride=1, padding='SAME', scope='root_block')
   end_points['root_block'] = net
   return net
 
@@ -234,7 +234,7 @@ def resnet_v2_cifar_no_branch(inputs,
     with slim.arg_scope(resnet_arg_scope()):
       end_points = {}
       net = inputs
-      with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=(is_training and TRAIN_COMMON_SEG)):
+      with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=(is_training)):
         net = resnet_v2_cifar10_root_block(net, end_points)
         net = resnet_v2_cifar10_stack_blocks(net, end_points, [NET_SIZE_N, NET_SIZE_N, NET_SIZE_N], exempt_first=True)
         net = resnet_v2_cifar10_ending_block(net, end_points, NUM_CLASSES)
