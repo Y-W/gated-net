@@ -89,7 +89,8 @@ def prepare_net(batch_queue, num_samples):
     tf.summary.scalar('soft_acc', moving_stats.average(soft_accuracy))
     tf.summary.scalar('learning_rate', learning_rate)
     tf.summary.scalar('slope_rate', slope_rate)
-    tf.summary.histogram('branch_result', end_points['branch_result'])
+    if 'branch_result' in end_points:
+        tf.summary.histogram('branch_result', end_points['branch_result'])
     summary_op = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES), name='summary_op')
     
     update_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS))
