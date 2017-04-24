@@ -38,6 +38,7 @@ _ITEMS_TO_DESCRIPTIONS = {
     'label': 'A single integer between 0 and 9',
 }
 
+LABELS_FILENAME = 'labels.txt'
 
 def read_label_file(dataset_dir, filename=LABELS_FILENAME):
   """Reads the labels file and returns a mapping from ID to class name.
