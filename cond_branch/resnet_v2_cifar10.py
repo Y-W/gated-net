@@ -241,4 +241,5 @@ def resnet_v2_cifar_no_branch(inputs,
       final_output = net
       end_points['final_output'] = final_output
       end_points['hard_prediction'] = tf.argmax(final_output, axis=1, name='hard_prediction')
+      end_points['soft_prediction'] = final_output
       return final_output, end_points
