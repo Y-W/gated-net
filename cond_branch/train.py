@@ -12,10 +12,12 @@ import preprocess_inception
 slim = tf.contrib.slim
 
 BATCH_SIZE=128
-NUM_BRANCHES=2
-INITIAL_LEARNING_RATE=2e-4 # 1e-4
+NUM_BRANCHES=1
+INITIAL_LEARNING_RATE=1e-7 # 1e-4
 DECAY_RATE=0.8
+DECAY_STEP=2
 INFLAT_RATE=1.1
+INFLAT_STEP=1
 MOMENTUM_RATE=0.9
 
 DISK_READER=4
@@ -65,8 +67,8 @@ def prepare_net(batch_queue, num_samples):
     global_step = slim.create_global_step()
 
     batch_num = num_samples // BATCH_SIZE
-    learning_rate = tf.train.exponential_decay(INITIAL_LEARNING_RATE, global_step, 2 * batch_num, DECAY_RATE, staircase=True, name='learning_rate')
-    slope_rate = tf.train.exponential_decay(1.0, global_step, batch_num, INFLAT_RATE, staircase=True, name='slope_rate')
+    learning_rate = tf.train.exponential_decay(INITIAL_LEARNING_RATE, global_step, DECAY_STEP * batch_num, DECAY_RATE, staircase=True, name='learning_rate')
+    slope_rate = tf.train.exponential_decay(1.0, global_step, INFLAT_STEP * batch_num, INFLAT_RATE, staircase=True, name='slope_rate')
 
     images, labels = batch_queue.dequeue()
     logits, end_points = inception_v2.inception_v2(images, slope_rate, NUM_BRANCHES, is_training=True, reuse=False)
