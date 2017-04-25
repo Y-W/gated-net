@@ -536,7 +536,8 @@ def inception_v2(inputs,
         tmp_end_points = {}
         net, tmp_end_points = inception_v2_common_seg(net, tmp_end_points)
         end_points['common_seg'] = tmp_end_points
-      with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=is_training):
+      with slim.arg_scope([slim.batch_norm], is_training=is_training): # slim.dropout
+       with slim.arg_scope([slim.dropout], is_training=False):
         with tf.variable_scope('CondBranchFn', values=[net]):
           tmp_end_points = {}
           branch_val, tmp_end_points = inception_v2_gate_seg(net, tmp_end_points, num_branches)
