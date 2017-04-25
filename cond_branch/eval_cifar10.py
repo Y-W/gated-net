@@ -16,7 +16,7 @@ BATCH_SIZE=500
 TRAIN_IMAGE_SIZE=32
 DISK_READER=2
 PREPROCESSOR=2
-NUM_BRANCHES=1
+NUM_BRANCHES=2
 
 tf.app.flags.DEFINE_string(
     'dataset_dir', None, 'The directory where the dataset files are stored.')
@@ -35,7 +35,7 @@ def prepare_dataset():
     with tf.device('/cpu:0'):
         with tf.variable_scope('evaluation_data_provider'):
 
-            dataset = cifar10.get_split('validation', FLAGS.dataset_dir)
+            dataset = cifar10.get_split('test', FLAGS.dataset_dir)
 
             provider = slim.dataset_data_provider.DatasetDataProvider(
                 dataset, shuffle=False,
