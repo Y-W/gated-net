@@ -65,10 +65,14 @@ def prepare_net(images, labels):
         'Accuracy': slim.metrics.streaming_accuracy(pred, labels),
         'Recall_5': slim.metrics.streaming_recall_at_k(
             logits, labels, 5),
+        'Split': tf.metrics.mean_tensor(end_points['branch_result']),
     })
     for name, value in names_to_values.iteritems():
         summary_name = 'eval/%s' % name
-        op = tf.summary.scalar(summary_name, value, collections=[])
+        if value.shape.ndims == 0:
+            op = tf.summary.scalar(summary_name, value, collections=[])
+        else:
+            op = tf.summary.histogram(summary_name, value, collections=[])
         op = tf.Print(op, [value], summary_name)
         tf.add_to_collection(tf.GraphKeys.SUMMARIES, op)
     

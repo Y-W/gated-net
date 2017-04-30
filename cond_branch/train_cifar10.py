@@ -12,13 +12,17 @@ import resnet_v2_cifar10
 slim = tf.contrib.slim
 
 BATCH_SIZE=128
-NUM_BRANCHES=4
-INITIAL_LEARNING_RATE=5e-2
+NUM_BRANCHES=2
+INITIAL_LEARNING_RATE=1e-1
 DECAY_RATE=0.1
 DECAY_STEP=80
 INFLAT_RATE=1.0
 INFLAT_STEP=40
 MOMENTUM_RATE=0.9
+
+TOTAL_EPOCHS=250
+
+BATCH_SIZE_TEST=500
 
 DISK_READER=2
 PREPROCESSOR=2
@@ -59,6 +63,31 @@ def prepare_dataset():
                 [images, labels], capacity=10)
     return dataset, batch_queue
 
+
+def prepare_dataset_eval():
+    with tf.device('/cpu:0'):
+        with tf.variable_scope('evaluation_data_provider'):
+
+            dataset = cifar10.get_split('test', FLAGS.dataset_dir)
+
+            provider = slim.dataset_data_provider.DatasetDataProvider(
+                dataset, shuffle=False,
+                num_readers=DISK_READER,
+                common_queue_capacity=20 * BATCH_SIZE_TEST,
+                common_queue_min=10 * BATCH_SIZE_TEST)
+            [image, label] = provider.get(['image', 'label'])
+
+            image = preprocessing_cifar10.preprocess_image(image, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE, is_training=False)
+
+            images, labels = tf.train.batch(
+                [image, label],
+                batch_size=BATCH_SIZE_TEST,
+                num_threads=PREPROCESSOR,
+                capacity=10 * BATCH_SIZE_TEST)
+
+    return dataset, images, labels
+
+
 def prepare_net(batch_queue, num_samples):
     global_step = slim.create_global_step()
 
@@ -67,9 +96,6 @@ def prepare_net(batch_queue, num_samples):
     slope_rate = tf.train.exponential_decay(1.0, global_step, INFLAT_STEP * batch_num, INFLAT_RATE, staircase=True, name='slope_rate')
 
     images, labels = batch_queue.dequeue()
-    # import numpy as np
-    # images = tf.constant(np.random.random(size=(BATCH_SIZE, 32, 32, 3)), dtype=tf.float32)
-    # labels = tf.constant(np.eye(10)[np.random.randint(10, size=(BATCH_SIZE))], dtype=tf.float32)
 
     logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, slope_rate, NUM_BRANCHES, is_training=True)
 
@@ -109,37 +135,32 @@ def prepare_net(batch_queue, num_samples):
     
     return train_tensor, summary_op
 
+
+def prepare_net_eval(images, labels):
+    with tf.name_scope('eval'):
+        logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, None, NUM_BRANCHES, is_training=False, reuse=True)
+    pred = end_points['hard_prediction']
+    labels = tf.squeeze(labels)
+
+    # Define the metrics:
+    names_to_values, names_to_updates = slim.metrics.aggregate_metric_map({
+        'Accuracy': slim.metrics.streaming_accuracy(pred, labels),
+        'Recall_5': slim.metrics.streaming_recall_at_k(
+            logits, labels, 5),
+        'Split': tf.metrics.mean_tensor(end_points['branch_result']),
+    })
+    for name, value in names_to_values.iteritems():
+        summary_name = 'eval/%s' % name
+        if value.shape.ndims == 0:
+            op = tf.summary.scalar(summary_name, value, collections=[])
+        else:
+            op = tf.summary.histogram(summary_name, value, collections=[])
+        op = tf.Print(op, [value], summary_name)
+        tf.add_to_collection(tf.GraphKeys.SUMMARIES, op)
     
-# def load_pretrain_model():
-#     variable_restoring = []
-#     for var in slim.get_model_variables():
-#         var_name = var.op.name
-#         var_name_comp = var_name.split('/')
-#         if 'CondBranchFn' in var_name_comp:
-#             continue
-#         var_name_comp = filter(lambda s: not s.startswith('CondBranch_'), var_name_comp)
-#         var_name_new = '/'.join(var_name_comp)
-#         added_var = False
-#         for m in variable_restoring:
-#             if var_name_new not in m:
-#                 m[var_name_new] = var
-#                 added_var = True
-#                 break
-#         if not added_var:
-#             variable_restoring.append({var_name_new : var})
-#     tf.logging.info('Fine-tuning from %s' % FLAGS.pretrain_checkpoint)
+    return names_to_updates
 
-#     init_fn = []
-#     with tf.variable_scope('init_fn'):
-#         for m in variable_restoring:
-#             init_fn.append(slim.assign_from_checkpoint_fn(FLAGS.pretrain_checkpoint, m))
-#     def _init_fn(sess):
-#         for f in init_fn:
-#             f(sess)
-#     return _init_fn
-        
-
-
+    
 def main(_):
     if not FLAGS.dataset_dir or not FLAGS.model_log_dir:
         raise ValueError('Specify all flags')
@@ -150,6 +171,7 @@ def main(_):
 
     slim.learning.train(
         train_t,
+        number_of_steps=TOTAL_EPOCHS * (dataset.num_samples // BATCH_SIZE),
         logdir=FLAGS.model_log_dir,
         log_every_n_steps=100,
         # init_fn=load_pretrain_model(),
@@ -158,6 +180,21 @@ def main(_):
         saver=tf.train.Saver(var_list=tf.model_variables() + [slim.get_or_create_global_step()], max_to_keep=20),
         save_interval_secs=600)
     
+    if tf.gfile.IsDirectory(FLAGS.model_log_dir):
+        checkpoint_path = tf.train.latest_checkpoint(FLAGS.model_log_dir)
+    else:
+        checkpoint_path = FLAGS.model_log_dir
+    
+    dataset, images, labels = prepare_dataset_eval()
+    names_to_updates = prepare_net_eval(images, labels)
+    num_batches = math.ceil(dataset.num_samples / float(BATCH_SIZE_TEST))
+    slim.evaluation.evaluate_once('',
+        checkpoint_path=checkpoint_path,
+        logdir=FLAGS.eval_dir,
+        num_evals=num_batches,
+        eval_op=tf.group(*names_to_updates.values()),
+        variables_to_restore=tf.model_variables() + [slim.get_or_create_global_step()])
+
 
 if __name__ == '__main__':
   tf.app.run()
