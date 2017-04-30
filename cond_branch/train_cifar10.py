@@ -146,12 +146,19 @@ def prepare_net_eval(images, labels):
     pred = end_points['hard_prediction']
     labels = tf.squeeze(labels)
 
+    label_branch_dist = (1.0 / BATCH_SIZE_TEST) * 
+                        tf.matmul(
+                            tf.one_hot(labels, cifar10._NUM_CLASSES, dtype=tf.float32),
+                            end_points['branch_result'],
+                            transpose_a=True
+                        )
+
     # Define the metrics:
     names_to_values, names_to_updates = slim.metrics.aggregate_metric_map({
         'Accuracy': slim.metrics.streaming_accuracy(pred, labels),
         'Recall_5': slim.metrics.streaming_recall_at_k(
             logits, labels, 5),
-        'Split': tf.metrics.mean_tensor(tf.reduce_mean(end_points['branch_result'], axis=0)),
+        'Split': tf.metrics.mean_tensor(label_branch_dist),
     })
     for name, value in names_to_values.iteritems():
         summary_name = 'eval/%s' % name
