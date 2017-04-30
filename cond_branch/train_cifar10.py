@@ -12,7 +12,7 @@ import resnet_v2_cifar10
 slim = tf.contrib.slim
 
 NUM_BRANCHES=2
-NET_SIZE_N=3
+NET_SIZE_N=4
 
 BATCH_SIZE=128
 
