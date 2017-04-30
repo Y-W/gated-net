@@ -140,8 +140,7 @@ def prepare_net(batch_queue, num_samples):
 
 
 def prepare_net_eval(images, labels):
-    with tf.name_scope('eval'):
-        logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, None, NET_SIZE_N, NUM_BRANCHES, is_training=False, reuse=True)
+    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, None, NET_SIZE_N, NUM_BRANCHES, is_training=False, reuse=False)
     pred = end_points['hard_prediction']
     labels = tf.squeeze(labels)
 
@@ -182,6 +181,8 @@ def main(_):
         save_summaries_secs=20,
         saver=tf.train.Saver(var_list=tf.model_variables() + [slim.get_or_create_global_step()], max_to_keep=20),
         save_interval_secs=600)
+    
+    tf.reset_default_graph()
     
     if tf.gfile.IsDirectory(FLAGS.model_log_dir):
         checkpoint_path = tf.train.latest_checkpoint(FLAGS.model_log_dir)
