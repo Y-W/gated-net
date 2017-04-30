@@ -146,7 +146,7 @@ def prepare_net_eval(images, labels):
     pred = end_points['hard_prediction']
     labels = tf.squeeze(labels)
 
-    label_branch_dist = (1.0 / BATCH_SIZE_TEST) * 
+    label_branch_dist = (1.0 / BATCH_SIZE_TEST) * \
                         tf.matmul(
                             tf.one_hot(labels, cifar10._NUM_CLASSES, dtype=tf.float32),
                             end_points['branch_result'],
