@@ -125,6 +125,8 @@ def prepare_net(batch_queue, num_samples):
     tf.summary.scalar('slope_rate', slope_rate)
     if 'branch_result' in end_points:
         tf.summary.histogram('branch_result', end_points['branch_result'])
+        tf.summary.histogram('branch_preact', end_points['branch_preact'])
+        tf.summary.histogram('branch_soft', tf.nn.softmax(end_points['branch_preact'], dim=1))
     summary_op = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES), name='summary_op')
     
     update_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS))
@@ -158,7 +160,7 @@ def prepare_net_eval(images, labels):
             op = tf.summary.scalar(summary_name, value, collections=[])
         else:
             op = tf.summary.histogram(summary_name, value, collections=[])
-        op = tf.Print(op, [value], summary_name)
+        op = tf.Print(op, [value], summary_name, summarize=1000)
         tf.add_to_collection(tf.GraphKeys.SUMMARIES, op)
     
     return names_to_updates
