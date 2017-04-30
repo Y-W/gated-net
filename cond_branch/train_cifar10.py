@@ -19,8 +19,8 @@ BATCH_SIZE=128
 INITIAL_LEARNING_RATE=1e-1
 DECAY_RATE=0.1
 DECAY_STEP=80
-INFLAT_RATE=1.0
-INFLAT_STEP=10
+INFLAT_RATE=1.2
+INFLAT_STEP=40
 MOMENTUM_RATE=0.9
 
 BALANCE_WEIGHT=10.0
@@ -111,7 +111,7 @@ def prepare_net(batch_queue, num_samples):
         mean_preact_loss = tf.reduce_mean(tf.abs(tf.reduce_mean(end_points['branch_preact'], axis=0)))
         reg_loss = mean_preact_loss * BALANCE_WEIGHT
         if len(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)) > 0:
-            reg_loss = tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='reg_Loss')
+            reg_loss = reg_loss + tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='reg_Loss')
         total_loss = tf.add(pred_loss, reg_loss, name='total_loss')
     
     moving_stats = tf.train.ExponentialMovingAverage(decay=0.98)
