@@ -195,7 +195,7 @@ def main(_):
     num_batches = math.ceil(dataset.num_samples / float(BATCH_SIZE_TEST))
     slim.evaluation.evaluate_once('',
         checkpoint_path=checkpoint_path,
-        logdir=FLAGS.eval_dir,
+        logdir=FLAGS.model_log_dir,
         num_evals=num_batches,
         eval_op=tf.group(*names_to_updates.values()),
         variables_to_restore=tf.model_variables() + [slim.get_or_create_global_step()])
