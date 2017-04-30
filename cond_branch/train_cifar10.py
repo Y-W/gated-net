@@ -109,13 +109,13 @@ def prepare_net(batch_queue, num_samples):
         hard_accuracy = tf.reduce_mean(tf.to_float(tf.equal(end_points['hard_prediction'], tf.argmax(labels, axis=1))), name='hard_acc')
         soft_accuracy = tf.reduce_mean(tf.reduce_sum(end_points['soft_prediction'] * labels, axis=1), name='soft_acc')
         mean_preact_loss = tf.reduce_mean(tf.abs(tf.reduce_mean(end_points['branch_preact'], axis=0)))
-        reg_loss = mean_preact * BALANCE_WEIGHT
+        reg_loss = mean_preact_loss * BALANCE_WEIGHT
         if len(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)) > 0:
             reg_loss = tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='reg_Loss')
         total_loss = tf.add(pred_loss, reg_loss, name='total_loss')
     
     moving_stats = tf.train.ExponentialMovingAverage(decay=0.98)
-    moving_stats_op = moving_stats.apply([pred_loss, reg_loss, total_loss, hard_accuracy, soft_accuracy])
+    moving_stats_op = moving_stats.apply([pred_loss, reg_loss, total_loss, hard_accuracy, soft_accuracy, mean_preact_loss])
     tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, moving_stats_op)
 
     tf.summary.scalar('pred_loss', moving_stats.average(pred_loss))
@@ -123,6 +123,7 @@ def prepare_net(batch_queue, num_samples):
     tf.summary.scalar('total_loss', moving_stats.average(total_loss))
     tf.summary.scalar('hard_acc', moving_stats.average(hard_accuracy))
     tf.summary.scalar('soft_acc', moving_stats.average(soft_accuracy))
+    tf.summary.scalar('mean_preact_loss', moving_stats.average(mean_preact_loss))
     tf.summary.scalar('learning_rate', learning_rate)
     tf.summary.scalar('slope_rate', slope_rate)
     if 'branch_result' in end_points:
