@@ -12,7 +12,7 @@ import resnet_v2_cifar10
 slim = tf.contrib.slim
 
 NUM_BRANCHES=2
-NET_SIZE_N=5
+NET_SIZE_N=3
 
 BATCH_SIZE=128
 
@@ -22,6 +22,8 @@ DECAY_STEP=80
 INFLAT_RATE=1.0
 INFLAT_STEP=10
 MOMENTUM_RATE=0.9
+
+BALANCE_WEIGHT=10.0
 
 TOTAL_EPOCHS=DECAY_STEP * 4 - 1
 
@@ -106,7 +108,8 @@ def prepare_net(batch_queue, num_samples):
         pred_loss = tf.losses.softmax_cross_entropy(labels, logits, scope='cross_entropy_loss')
         hard_accuracy = tf.reduce_mean(tf.to_float(tf.equal(end_points['hard_prediction'], tf.argmax(labels, axis=1))), name='hard_acc')
         soft_accuracy = tf.reduce_mean(tf.reduce_sum(end_points['soft_prediction'] * labels, axis=1), name='soft_acc')
-        reg_loss = tf.constant(0.0, dtype=tf.float32)
+        mean_preact_loss = tf.reduce_mean(tf.abs(tf.reduce_mean(end_points['branch_preact'], axis=0)))
+        reg_loss = mean_preact * BALANCE_WEIGHT
         if len(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)) > 0:
             reg_loss = tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='reg_Loss')
         total_loss = tf.add(pred_loss, reg_loss, name='total_loss')
