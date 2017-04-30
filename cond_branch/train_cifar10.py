@@ -152,7 +152,7 @@ def prepare_net_eval(images, labels):
         'Accuracy': slim.metrics.streaming_accuracy(pred, labels),
         'Recall_5': slim.metrics.streaming_recall_at_k(
             logits, labels, 5),
-        'Split': tf.metrics.mean_tensor(end_points['branch_result']),
+        'Split': tf.metrics.mean_tensor(tf.reduce_mean(end_points['branch_result'], axis=0)),
     })
     for name, value in names_to_values.iteritems():
         summary_name = 'eval/%s' % name
@@ -167,6 +167,16 @@ def prepare_net_eval(images, labels):
 
     
 def main(_):
+    print 'NUM_BRANCHES', NUM_BRANCHES
+    print 'NET_SIZE_N', NET_SIZE_N
+    print 'INITIAL_LEARNING_RATE', INITIAL_LEARNING_RATE
+    print 'DECAY_RATE', DECAY_RATE
+    print 'DECAY_STEP', DECAY_STEP
+    print 'INFLAT_RATE', INFLAT_RATE
+    print 'INFLAT_STEP', INFLAT_STEP
+    print 'TOTAL_EPOCHS', TOTAL_EPOCHS
+    print 'BATCH_SIZE', BATCH_SIZE
+
     if not FLAGS.dataset_dir or not FLAGS.model_log_dir:
         raise ValueError('Specify all flags')
     tf.logging.set_verbosity(tf.logging.INFO)
