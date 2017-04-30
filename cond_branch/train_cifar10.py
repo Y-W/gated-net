@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import math
 
 from tensorflow.python.ops import control_flow_ops
 import cifar10
@@ -23,7 +24,7 @@ INFLAT_RATE=1.0
 INFLAT_STEP=10
 MOMENTUM_RATE=0.9
 
-TOTAL_EPOCHS=3
+TOTAL_EPOCHS=1
 
 BATCH_SIZE_TEST=500
 
