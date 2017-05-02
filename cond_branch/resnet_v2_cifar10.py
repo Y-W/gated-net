@@ -96,22 +96,25 @@ def resnet_arg_scope():
     return arg_sc
 
 
-def bottleneck(inputs, increase_dim, scope, output_collection):
+def bottleneck(inputs, increase_dim, double_depth, scope, output_collection):
   with tf.variable_scope(scope, 'bottleneck_v2', [inputs]) as sc:
     depth_in = slim.utils.last_dimension(inputs.get_shape(), min_rank=4)
     # preact = slim.batch_norm(inputs, activation_fn=tf.nn.relu, scope='preact')
-    if increase_dim:
+    if double_depth:
       depth_out = depth_in * 2
-      stride = 2
     else:
       depth_out = depth_in
+    if increase_dim:
+      stride = 2
+    else:
       stride = 1
     
     if increase_dim:
       shortcut = tf.nn.avg_pool(inputs, [1, 1, 1, 1], [1, 2, 2, 1], 'SAME')
-      shortcut = tf.pad(shortcut, [[0, 0], [0, 0], [0, 0], [0, depth_in]])
     else:
       shortcut = inputs
+    if double_depth:
+      shortcut = tf.pad(shortcut, [[0, 0], [0, 0], [0, 0], [0, depth_in]])
     
     residual = conv2d_same(inputs, depth_out, 3, stride, scope='conv1')
     residual = slim.conv2d(residual, depth_out, [3, 3], stride=1,
@@ -134,18 +137,18 @@ def resnet_v2_cifar10_ending_block(inputs, end_points, num_classes):
   end_points['ending_block'] = net
   return net
 
-def resnet_v2_cifar10_stack_blocks(inputs, end_points, schema, exempt_first=False):
+def resnet_v2_cifar10_stack_blocks(inputs, end_points, schema, exempt_first=False, double_depth=True):
   is_first = True
   net = inputs
   for c, i in enumerate(schema):
     with tf.variable_scope('stage_%i' % c, None, [net]):
       if is_first and exempt_first:
         is_first = False
-        net = bottleneck(net, False, 'block_0', end_points)
+        net = bottleneck(net, False, False, 'block_0', end_points)
       else:
-        net = bottleneck(net, True, 'block_0', end_points)
+        net = bottleneck(net, True, double_depth, 'block_0', end_points)
       for j in xrange(1, i):
-        net = bottleneck(net, False, 'block_%i' % j, end_points)
+        net = bottleneck(net, False, False, 'block_%i' % j, end_points)
   return net
 
 
@@ -175,6 +178,7 @@ def resnet_v2_cifar(inputs,
                  slope_tensor,
                  common_seg_scheme,
                  branch_seg_scheme,
+                 branch_double_depth,
                  num_branches,
                  is_training=True,
                  reuse=False,
@@ -206,7 +210,7 @@ def resnet_v2_cifar(inputs,
           with tf.variable_scope(branch_name, values=[net]):
             with slim.arg_scope([slim.batch_norm], batch_weights=branch_decision_list[i]):
               tmp_end_points = {}
-              branch_output = resnet_v2_cifar10_stack_blocks(net, tmp_end_points, branch_seg_scheme)
+              branch_output = resnet_v2_cifar10_stack_blocks(net, tmp_end_points, branch_seg_scheme, double_depth=branch_double_depth)
               branch_output = resnet_v2_cifar10_ending_block(branch_output, tmp_end_points, NUM_CLASSES)
               end_points[branch_name] = tmp_end_points
               branch_endpoints.append(branch_output)
