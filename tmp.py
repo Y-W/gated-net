@@ -1,3 +1,4 @@
+import numpy as np
 def proc(a):
     d = np.array(eval(a.replace('][','],[').replace(' ',',')))
     e = np.sum(d, axis=0)
