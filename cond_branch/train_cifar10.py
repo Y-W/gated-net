@@ -108,7 +108,7 @@ def prepare_net(batch_queue, num_samples):
         pred_loss = tf.losses.softmax_cross_entropy(labels, logits, scope='cross_entropy_loss')
         hard_accuracy = tf.reduce_mean(tf.to_float(tf.equal(end_points['hard_prediction'], tf.argmax(labels, axis=1))), name='hard_acc')
         soft_accuracy = tf.reduce_mean(tf.reduce_sum(end_points['soft_prediction'] * labels, axis=1), name='soft_acc')
-        mean_preact_loss = tf.reduce_mean(tf.abs(tf.reduce_mean(end_points['branch_preact'] * slope_rate, axis=0)))
+        mean_preact_loss = tf.reduce_mean(tf.abs(tf.reduce_mean(end_points['branch_preact'], axis=0)))
         reg_loss = mean_preact_loss * BALANCE_WEIGHT
         if len(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)) > 0:
             reg_loss = reg_loss + tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='reg_Loss')
