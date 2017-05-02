@@ -12,7 +12,8 @@ import resnet_v2_cifar10
 slim = tf.contrib.slim
 
 NUM_BRANCHES=2
-NET_SIZE_N=3
+COMMON_SEG_SCHEMA=[3]
+BRANCH_SEG_SCHEMA=[2, 2]
 
 BATCH_SIZE=128
 
@@ -102,7 +103,7 @@ def prepare_net(batch_queue, num_samples):
 
     images, labels = batch_queue.dequeue()
 
-    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, slope_rate, NET_SIZE_N, NUM_BRANCHES, is_training=True)
+    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, slope_rate, COMMON_SEG_SCHEMA, BRANCH_SEG_SCHEMA, NUM_BRANCHES, is_training=True)
 
     with tf.variable_scope('stats'):
         pred_loss = tf.losses.softmax_cross_entropy(labels, logits, scope='cross_entropy_loss')
@@ -146,7 +147,7 @@ def prepare_net(batch_queue, num_samples):
 
 
 def prepare_net_eval(images, labels):
-    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, None, NET_SIZE_N, NUM_BRANCHES, is_training=False, reuse=False)
+    logits, end_points = resnet_v2_cifar10.resnet_v2_cifar(images, None, COMMON_SEG_SCHEMA, BRANCH_SEG_SCHEMA, NUM_BRANCHES, is_training=False, reuse=False)
     pred = end_points['hard_prediction']
     labels = tf.squeeze(labels)
 
@@ -178,7 +179,8 @@ def prepare_net_eval(images, labels):
     
 def main(_):
     print 'NUM_BRANCHES', NUM_BRANCHES
-    print 'NET_SIZE_N', NET_SIZE_N
+    print 'COMMON_SEG_SCHEMA', COMMON_SEG_SCHEMA
+    print 'BRANCH_SEG_SCHEMA', BRANCH_SEG_SCHEMA
     print 'INITIAL_LEARNING_RATE', INITIAL_LEARNING_RATE
     print 'DECAY_RATE', DECAY_RATE
     print 'DECAY_STEP', DECAY_STEP

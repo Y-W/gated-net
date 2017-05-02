@@ -11,7 +11,7 @@ slim = tf.contrib.slim
 
 NUM_CLASSES=10
 
-WEIGHT_DECAY=0.003
+WEIGHT_DECAY=0.0001
 BATCH_NORM_DECAY=0.99
 BATCH_NORM_EPSILON=1e-3
 
@@ -173,7 +173,8 @@ def stochastic_branch_fn(input_tensor, slope_tensor, is_training):
 
 def resnet_v2_cifar(inputs,
                  slope_tensor,
-                 NET_SIZE_N,
+                 common_seg_scheme,
+                 branch_seg_scheme,
                  num_branches,
                  is_training=True,
                  reuse=False,
@@ -187,7 +188,7 @@ def resnet_v2_cifar(inputs,
       with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=(is_training and TRAIN_COMMON_SEG)):
         tmp_end_points = {}
         net = resnet_v2_cifar10_root_block(net, tmp_end_points)
-        net = resnet_v2_cifar10_stack_blocks(net, tmp_end_points, [NET_SIZE_N], exempt_first=True)
+        net = resnet_v2_cifar10_stack_blocks(net, tmp_end_points, common_seg_scheme, exempt_first=True)
         end_points['common_seg'] = tmp_end_points
       with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=is_training):
         with tf.variable_scope('CondBranchFn', values=[net]):
@@ -205,7 +206,7 @@ def resnet_v2_cifar(inputs,
           with tf.variable_scope(branch_name, values=[net]):
             with slim.arg_scope([slim.batch_norm], batch_weights=branch_decision_list[i]):
               tmp_end_points = {}
-              branch_output = resnet_v2_cifar10_stack_blocks(net, tmp_end_points, [NET_SIZE_N, NET_SIZE_N])
+              branch_output = resnet_v2_cifar10_stack_blocks(net, tmp_end_points, branch_seg_scheme)
               branch_output = resnet_v2_cifar10_ending_block(branch_output, tmp_end_points, NUM_CLASSES)
               end_points[branch_name] = tmp_end_points
               branch_endpoints.append(branch_output)
