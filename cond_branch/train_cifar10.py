@@ -108,7 +108,7 @@ def prepare_net(batch_queue, num_samples):
         pred_loss = tf.losses.softmax_cross_entropy(labels, logits, scope='cross_entropy_loss')
         hard_accuracy = tf.reduce_mean(tf.to_float(tf.equal(end_points['hard_prediction'], tf.argmax(labels, axis=1))), name='hard_acc')
         soft_accuracy = tf.reduce_mean(tf.reduce_sum(end_points['soft_prediction'] * labels, axis=1), name='soft_acc')
-        mean_preact_loss = tf.reduce_mean(tf.abs(tf.reduce_mean(end_points['branch_preact'], axis=0)))
+        mean_preact_loss = tf.reduce_mean(tf.abs(tf.reduce_mean(end_points['branch_preact'] * slope_rate, axis=0)))
         reg_loss = mean_preact_loss * BALANCE_WEIGHT
         if len(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)) > 0:
             reg_loss = reg_loss + tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='reg_Loss')
@@ -186,6 +186,8 @@ def main(_):
     print 'INFLAT_STEP', INFLAT_STEP
     print 'TOTAL_EPOCHS', TOTAL_EPOCHS
     print 'BATCH_SIZE', BATCH_SIZE
+    print 'BALANCE_WEIGHT', BALANCE_WEIGHT
+    print 'WEIGHT_DECAY', resnet_v2_cifar10.WEIGHT_DECAY
 
     if not FLAGS.dataset_dir or not FLAGS.model_log_dir:
         raise ValueError('Specify all flags')
