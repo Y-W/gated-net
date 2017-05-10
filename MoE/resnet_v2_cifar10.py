@@ -17,7 +17,7 @@ BATCH_NORM_EPSILON=1e-3
 
 TRAIN_COMMON_SEG=True
 
-TOP_K=4
+TOP_K=None # 4
 
 BATCH_NORM_PARAMS = {
       # Decay for the moving averages.
@@ -164,12 +164,15 @@ def stochastic_branch_fn(softmax_input, noise_input, is_training):
     gate_input = softmax_input + tf.random_normal(noise_input.shape) * tf.nn.softplus(noise_input)
   else:
     gate_input = softmax_input
-  neg_inf = -1e6
-  _, indices = tf.nn.top_k(tf.stop_gradient(gate_input), k=TOP_K)
-  activation = tf.reduce_sum(tf.one_hot(indices, branch_num), axis=1)
-  base_value = tf.stop_gradient((1.0 - activation) * neg_inf)
-  with tf.get_default_graph().gradient_override_map({'Mul': 'FirstGradOnly_GradFn'}):
-    dropped_gate_value = tf.multiply(gate_input, activation) + base_value
+  if TOP_K is None:
+    dropped_gate_value = gate_input
+  else:
+    neg_inf = -1e6
+    _, indices = tf.nn.top_k(tf.stop_gradient(gate_input), k=TOP_K)
+    activation = tf.reduce_sum(tf.one_hot(indices, branch_num), axis=1)
+    base_value = tf.stop_gradient((1.0 - activation) * neg_inf)
+    with tf.get_default_graph().gradient_override_map({'Mul': 'FirstGradOnly_GradFn'}):
+      dropped_gate_value = tf.multiply(gate_input, activation) + base_value
   return tf.nn.softmax(dropped_gate_value)
 
 def resnet_v2_cifar(inputs,
