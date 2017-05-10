@@ -17,7 +17,7 @@ BATCH_NORM_EPSILON=1e-3
 
 TRAIN_COMMON_SEG=True
 
-TOP_K=None # 4
+TOP_K=4 # 4
 
 BATCH_NORM_PARAMS = {
       # Decay for the moving averages.
