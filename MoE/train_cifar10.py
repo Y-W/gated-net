@@ -11,7 +11,7 @@ import resnet_v2_cifar10
 
 slim = tf.contrib.slim
 
-NUM_BRANCHES=8
+NUM_BRANCHES=10
 COMMON_SEG_SCHEMA=[1]
 BRANCH_SEG_SCHEMA=[1, 1]
 BRANCH_DOUBLE_DEPTH=True
@@ -128,10 +128,10 @@ def prepare_net(batch_queue, num_samples):
     tf.summary.scalar('mean_preact_loss', moving_stats.average(mean_preact_loss))
     tf.summary.scalar('learning_rate', learning_rate)
     tf.summary.scalar('slope_rate', slope_rate)
-    if 'branch_result' in end_points:
-        tf.summary.histogram('branch_result', end_points['branch_result'])
-        tf.summary.histogram('branch_preact', end_points['branch_preact'])
-        tf.summary.histogram('branch_soft', tf.nn.softmax(end_points['branch_preact'], dim=1))
+    # if 'branch_result' in end_points:
+    #     tf.summary.histogram('branch_result', end_points['branch_result'])
+    #     tf.summary.histogram('branch_preact', end_points['branch_preact'])
+    #     tf.summary.histogram('branch_soft', tf.nn.softmax(end_points['branch_preact'], dim=1))
     summary_op = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES), name='summary_op')
     
     update_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS))
