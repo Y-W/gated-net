@@ -11,7 +11,7 @@ import resnet_v2_cifar10
 
 slim = tf.contrib.slim
 
-NUM_BRANCHES=4
+NUM_BRANCHES=8
 COMMON_SEG_SCHEMA=[1]
 BRANCH_SEG_SCHEMA=[1, 1]
 BRANCH_DOUBLE_DEPTH=True
