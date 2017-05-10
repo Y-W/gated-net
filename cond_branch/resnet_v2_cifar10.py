@@ -197,8 +197,8 @@ def resnet_v2_cifar(inputs,
       with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=is_training):
         with tf.variable_scope('CondBranchFn', values=[net]):
           tmp_end_points = {}
-          branch_val = resnet_v2_cifar10_stack_blocks(net, tmp_end_points, [1, 1])
-          branch_val = resnet_v2_cifar10_ending_block(branch_val, tmp_end_points, num_branches)
+          # branch_val = resnet_v2_cifar10_stack_blocks(net, tmp_end_points, [1, 1])
+          branch_val = resnet_v2_cifar10_ending_block(net, tmp_end_points, num_branches)
           end_points['branch_fn'] = tmp_end_points
           end_points['branch_preact'] = branch_val
           branch_val = stochastic_branch_fn(branch_val, slope_tensor, is_training)
