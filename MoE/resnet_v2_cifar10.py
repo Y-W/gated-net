@@ -154,9 +154,9 @@ def resnet_v2_cifar10_stack_blocks(inputs, end_points, schema, exempt_first=Fals
   return net
 
 
-@ops.RegisterGradient("FirstGradOnly_GradFn")
-def firstGradOnly_GradFn(op, grad):
-    return [grad, None]
+# @ops.RegisterGradient("FirstGradOnly_GradFn")
+# def firstGradOnly_GradFn(op, grad):
+#     return [grad, None]
 
 def stochastic_branch_fn(softmax_input, noise_input, is_training):
   batch_size, branch_num = softmax_input.shape.as_list()
@@ -170,9 +170,10 @@ def stochastic_branch_fn(softmax_input, noise_input, is_training):
     neg_inf = -1e6
     _, indices = tf.nn.top_k(tf.stop_gradient(gate_input), k=TOP_K)
     activation = tf.reduce_sum(tf.one_hot(indices, branch_num), axis=1)
+    
     base_value = tf.stop_gradient((1.0 - activation) * neg_inf)
-    with tf.get_default_graph().gradient_override_map({'Mul': 'FirstGradOnly_GradFn'}):
-      dropped_gate_value = tf.multiply(gate_input, activation) + base_value
+    dropped_gate_value = tf.multiply(gate_input, tf.stop_gradient(activation)) + base_value
+    tf.summary.histogram('dropped_gate_value', dropped_gate_value)
   return tf.nn.softmax(dropped_gate_value)
 
 def resnet_v2_cifar(inputs,
