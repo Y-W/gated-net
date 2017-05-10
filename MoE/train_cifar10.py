@@ -129,7 +129,7 @@ def prepare_net(batch_queue, num_samples):
     tf.summary.scalar('learning_rate', learning_rate)
     tf.summary.scalar('slope_rate', slope_rate)
     if 'branch_result' in end_points:
-        tf.summary.histogram('branch_result', end_points['branch_result'])
+        tf.summary.histogram('branch_result', tf.reduce_mean(end_points['branch_result'], axis=0))
         tf.summary.histogram('branch_preact', end_points['branch_preact'])
         tf.summary.histogram('branch_soft', tf.nn.softmax(end_points['branch_preact'], dim=1))
         tf.summary.histogram('branch_noise', end_points['branch_noise'])
