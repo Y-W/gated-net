@@ -134,15 +134,19 @@ def prepare_net(batch_queue, num_samples):
         tf.summary.histogram('branch_soft', tf.nn.softmax(end_points['branch_preact'], dim=1))
         tf.summary.histogram('branch_noise', end_points['branch_noise'])
         tf.summary.histogram('branch_noise_real', tf.nn.softplus(end_points['branch_noise']))
-    summary_op = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES), name='summary_op')
+    
     
     update_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS))
 
     optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM_RATE, name='Momentum')
     gradients = optimizer.compute_gradients(total_loss)
+    for grad, var in gradients:
+        tf.summary.histogram('gradients/' + var.name, grad)
     # with tf.variable_scope('gradient_clipping'):
     #     gradients = [(tf.clip_by_value(grad, -2.0, 2.0), var) for grad, var in gradients]
     grad_update_op = optimizer.apply_gradients(gradients, global_step=global_step)
+    
+    summary_op = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES), name='summary_op')
 
     train_tensor = control_flow_ops.with_dependencies([update_op, grad_update_op], total_loss)
     
