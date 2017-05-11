@@ -138,7 +138,7 @@ def prepare_net(batch_queue, num_samples):
     
     update_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS))
 
-    optimizer = tf.train.RMSPropOptimizer(learning_rate, decay=0.9, momentum=MOMENTUM_RATE)
+    optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM_RATE)
     gradients = optimizer.compute_gradients(total_loss)
     for grad, var in gradients:
         tf.summary.histogram('gradients/' + var.name, grad)
