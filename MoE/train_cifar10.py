@@ -27,6 +27,8 @@ MOMENTUM_RATE=0.9
 
 BALANCE_WEIGHT=1.0
 
+CLIP_THRESHOLD=0.3
+
 TOTAL_EPOCHS=DECAY_STEP * 4 - 1
 
 BATCH_SIZE_TEST=500
@@ -138,12 +140,12 @@ def prepare_net(batch_queue, num_samples):
     
     update_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS))
 
-    optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM_RATE)
+    optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM_RATE, name='Momentum')
     gradients = optimizer.compute_gradients(total_loss)
     for grad, var in gradients:
         tf.summary.histogram('gradients/' + var.name, grad)
     with tf.variable_scope('gradient_clipping'):
-        gradients = [(tf.clip_by_value(grad, -0.3, 0.3), var) for grad, var in gradients]
+        gradients = [(tf.clip_by_value(grad, -CLIP_THRESHOLD, CLIP_THRESHOLD), var) for grad, var in gradients]
     grad_update_op = optimizer.apply_gradients(gradients, global_step=global_step)
     
     summary_op = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES), name='summary_op')
